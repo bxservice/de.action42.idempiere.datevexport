@@ -349,6 +349,7 @@ public final class Worker {
 
 		final Map<Integer, Set<I_Fact_Acct>> result = new HashMap<Integer, Set<I_Fact_Acct>>();
 
+		if (accts != null)
 		for (final I_Fact_Acct acct : accts) {
 
 			Set<I_Fact_Acct> set = result.get(acct.getC_Tax_ID());
