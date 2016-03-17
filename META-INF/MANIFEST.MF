@@ -4,3 +4,7 @@ Bundle-Name: DatevExport
 Bundle-SymbolicName: de.action42.idempiere.datevExport
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: lib/metas_contribs.jar,
+ .
+Require-Bundle: org.adempiere.base;bundle-version="3.1.0",
+ org.adempiere.ui.swing
