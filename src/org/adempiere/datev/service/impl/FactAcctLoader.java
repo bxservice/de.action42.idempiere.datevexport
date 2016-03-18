@@ -220,6 +220,8 @@ public class FactAcctLoader implements IFactAcctLoader {
 		final HashSet<String> docNrsToRemove = new HashSet<String>(
 				alreadyExportedDocNrs);
 
+		// XXX - AK / a42 - FR2011042920000032 - export canceled also
+		/*		
 		//
 		// Now remove from the remaining records those that are canceled (of
 		// course the cancellation is also removed.)
@@ -255,6 +257,8 @@ public class FactAcctLoader implements IFactAcctLoader {
 				}
 			}
 		}
+		*/
+		// end AK / a42
 		for (final String docNrToRemove : docNrsToRemove) {
 
 			docNr2FactAccts.remove(docNrToRemove);
@@ -262,7 +266,7 @@ public class FactAcctLoader implements IFactAcctLoader {
 		LOG
 				.info("Removed "
 						+ docNrsToRemove.size()
-						+ " canceled Fact_Accts as well as their respective cancellations");
+						+ " already exported Fact_Accts");
 	}
 
 }
