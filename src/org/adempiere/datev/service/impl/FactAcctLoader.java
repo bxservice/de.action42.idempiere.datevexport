@@ -19,7 +19,11 @@ import org.adempiere.model.MDatevExportLog;
 import org.compiere.model.I_Fact_Acct;
 import org.compiere.model.MElementValue;
 import org.compiere.model.MFactAcct;
+import org.compiere.model.MTax;
+import org.compiere.model.Query;
 import org.compiere.model.X_C_ElementValue;
+import org.compiere.model.X_C_Tax_Acct;
+import org.compiere.model.X_C_ValidCombination;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -181,8 +185,52 @@ public class FactAcctLoader implements IFactAcctLoader {
 							accountType2FactAccts);
 				}
 
-				final MElementValue debitorAcctInfo = new MElementValue(Env
+				
+				// XXX AK change to use RevenueAcct from Tax if applicable
+// 				final MTax debitorTaxInfo = new MTax(Env
+//						.getCtx(), factAcct.getC_Tax_ID(), trxName);
+				MElementValue debitorAcctInfo = null;
+				if (factAcct.getC_Tax_ID() > 0) {
+					final String taxAcct_sql = "SELECT XX_Revenue_Acct "
+						+ "FROM C_Tax_Acct " // 1
+						+ "WHERE C_Tax_ID=? "  // 2
+						+ " AND ad_client_id=? ";
+
+					int validCombinationID = 0;
+
+					PreparedStatement pstmt1 = null;
+					try {
+						pstmt1 = DB.prepareStatement(taxAcct_sql, trxName);
+						pstmt1.setLong(1, factAcct.getC_Tax_ID());
+						pstmt1.setLong(2, clientId);
+
+						ResultSet rs1 = pstmt1.executeQuery();
+
+						while (rs1.next()) {
+							validCombinationID = rs1.getInt(1);
+
+						}
+						rs1.close();
+						pstmt1.close();
+						pstmt1 = null;
+					} catch (Exception e) {
+						LOG.log(Level.SEVERE, "Retrieval of booking data failed. SQL: "
+								+ taxAcct_sql, e);
+						throw new DatevException(
+						"Retrieval of booking data failed. See issue log for details.");
+					}
+
+					final X_C_ValidCombination validCombination = new X_C_ValidCombination(Env.getCtx(), validCombinationID, trxName);
+
+					debitorAcctInfo = new MElementValue(Env
+							.getCtx(), validCombination.getAccount_ID(), trxName);
+					factAcct.setAccount_ID(validCombination.getAccount_ID());
+					// End AK
+				}
+				else {
+					debitorAcctInfo = new MElementValue(Env
 						.getCtx(), factAcct.getAccount_ID(), trxName);
+				}
 
 				factAccts = accountType2FactAccts.get(debitorAcctInfo
 						.getAccountType());
