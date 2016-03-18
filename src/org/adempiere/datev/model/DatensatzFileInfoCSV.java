@@ -1,6 +1,7 @@
 package org.adempiere.datev.model;
 
 import java.io.File;
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.adempiere.datev.io.CSV_Datensatzdatei;
@@ -50,7 +51,7 @@ public abstract class DatensatzFileInfoCSV {
 
 	public abstract List<? extends CSV_Buchungssatz> getDataRecordsCSV();
 
-	public abstract CSV_Datensatzdatei getFileCSV();
+	public abstract CSV_Datensatzdatei getFileCSV(Timestamp dateFrom);
 	
 	public abstract CSV_Vorlaufsatz getFileHeaderCSV();
 

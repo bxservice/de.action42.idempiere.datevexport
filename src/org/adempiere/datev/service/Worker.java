@@ -57,6 +57,7 @@ import org.compiere.model.I_C_BPartner;
 import org.compiere.model.I_C_ElementValue;
 import org.compiere.model.I_C_Invoice;
 import org.compiere.model.I_Fact_Acct;
+import org.compiere.model.MInvoice;
 import org.compiere.model.X_C_ElementValue;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -381,8 +382,8 @@ public final class Worker {
 			for (final I_Fact_Acct revenueAcct : tax2ToAcct.get(taxId)) {
 
 				// register the bPartner with our master data service
-				masterDataService.bPartnerSeenCSV(revenueAcct.getC_BPartner_ID(),
-						trxName);
+				MInvoice inv = new MInvoice(Env.getCtx(),debitorAcct.getRecord_ID(),trxName);
+				masterDataService.bPartnerSeenCSV(revenueAcct.getC_BPartner_ID(), inv.isSOTrx(), trxName);
 
 				final I_C_ElementValue revenueAcctInfo = accountingPA
 						.retrieveElementValue(revenueAcct.getAccount_ID(),
@@ -482,7 +483,9 @@ public final class Worker {
 								.getRecord_ID(), debitorAcct.getDescription()),
 						revenueAcct.getRecord_ID(), revenueAcct.getDateAcct());
 
-				id2LogRecord.put(dataRecord.getId(), exportLog);
+				if (!id2LogRecord.containsKey(debitorAcct.getRecord_ID())) {
+					id2LogRecord.put(debitorAcct.getRecord_ID(), exportLog);
+				}
 			}
 
 			final List<CSV_Bewegungsdaten_Buchungssatz> compressedResult = FactAcctTool
@@ -881,12 +884,51 @@ public final class Worker {
 			final Set<I_Fact_Acct> expenseAccts = recordId2FactAccts.get(
 					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Expense);
 
+			/**
+			 * From Doc_Invoice.java
+			 *
+			 *  Create Facts (the accounting logic) for
+			 *  ARI, ARC, ARF, API, APC.
+			 *  <pre>
+			 *  ARI Invoice (Customer), ARF ProForma 
+			 *      Receivables     DR
+			 *      Charge                  CR
+			 *      TaxDue                  CR
+			 *      Revenue                 CR
+			 *
+			 *  ARC Credit Note (Customer)
+			 *      Receivables             CR
+			 *      Charge          DR
+			 *      TaxDue          DR
+			 *      Revenue         RR
+			 *
+			 *  API Invoice (Vendor)
+			 *      Payables                CR
+			 *      Charge          DR
+			 *      TaxCredit       DR
+			 *      Expense         DR
+			 *
+			 *  APC CreditNote (Vendor)
+			 *      Payables        DR
+			 *      Charge                  CR
+			 *      TaxCredit               CR
+			 *      Expense                 CR
+			 *  </pre>
+			 */
+
+			MInvoice invoice = new MInvoice(Env.getCtx(), recordId, trxName);
 			// ARL - Invoice Customer
-			if (assetAccts != null && assetAccts.size() == 1 && liabilityAccts != null && liabilityAccts.size() == 1 && revenueAccts != null && revenueAccts.size() >= 1) {
+			if (invoice.isSOTrx()) {
+			//if (assetAccts != null && assetAccts.size() == 1 && liabilityAccts != null && liabilityAccts.size() == 1 && revenueAccts != null && revenueAccts.size() >= 1) {
 
 				// there is one debitor record. There might be one tax
 				// record (unless we ship to switzerland etc) and at least one
 				// revenue record. We only need the revenue record(s)
+				if (assetAccts == null) {
+					// ignore - something is wrong in this invoice
+					continue;
+				}
+
 				final I_Fact_Acct debitorAcct = assetAccts.iterator().next();
 
 				if (!loader.getDocNr2FactAccts().containsKey(
@@ -905,11 +947,17 @@ public final class Worker {
 			}
 
 			// Invoice Vendor  - EAL / AAL or combination
-			if (assetAccts != null && liabilityAccts != null && revenueAccts == null && assetAccts.size() >= 1 && liabilityAccts.size() == 1) {
+			else if (!invoice.isSOTrx()) {
+			//else if (assetAccts != null && liabilityAccts != null && revenueAccts == null && assetAccts.size() >= 1 && liabilityAccts.size() == 1) {
 
 				// there is one debitor (creditor) record. There might be one tax
 				// record (unless we ship to switzerland etc) and at least one
 				// liability record. We only need the liability record(s)
+				if (liabilityAccts == null) {
+					// ignore - something is wrong in this invoice
+					continue;
+				}
+				
 				final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
 
 				if (!loader.getDocNr2FactAccts().containsKey(
@@ -921,21 +969,25 @@ public final class Worker {
 				}
 				// debitorAcct (creditorAcct), revenueAccts(non-tax assetAccts + expenseAccts), taxAccts(tax assetAccts)
 				// create set and remove non-tax factAcct entries - having UoM and qty
-				Set<I_Fact_Acct> taxAccts = assetAccts;
-				Iterator<I_Fact_Acct> itrTax = taxAccts.iterator();
-				while (itrTax.hasNext()) {
-					I_Fact_Acct entry = itrTax.next();
-					if (entry.getC_UOM_ID() > 0 && entry.getQty().compareTo(Env.ZERO) != 0) {
-						itrTax.remove();
+				Set<I_Fact_Acct> taxAccts = new HashSet<I_Fact_Acct>();
+				Set<I_Fact_Acct> revAccts = new HashSet<I_Fact_Acct>();
+				if (assetAccts != null) {
+					taxAccts = assetAccts;
+					Iterator<I_Fact_Acct> itrTax = taxAccts.iterator();
+					while (itrTax.hasNext()) {
+						I_Fact_Acct entry = itrTax.next();
+						if (entry.getC_UOM_ID() > 0 && entry.getQty().compareTo(Env.ZERO) != 0) {
+							itrTax.remove();
+						}
 					}
-				}
-				// create set and remove tax related entries - having no UoM and no qty 
-				Set<I_Fact_Acct> revAccts = assetAccts;
-				Iterator<I_Fact_Acct> itrRev = revAccts.iterator();
-				while (itrRev.hasNext()) {
-					I_Fact_Acct entry = itrRev.next();
-					if (entry.getC_UOM_ID() == 0 && entry.getQty().compareTo(Env.ZERO) == 0) {
-						itrRev.remove();
+					// create set and remove tax related entries - having no UoM and no qty 
+					revAccts = assetAccts;
+					Iterator<I_Fact_Acct> itrRev = revAccts.iterator();
+					while (itrRev.hasNext()) {
+						I_Fact_Acct entry = itrRev.next();
+						if (entry.getC_UOM_ID() == 0 && entry.getQty().compareTo(Env.ZERO) == 0) {
+							itrRev.remove();
+						}
 					}
 				}
 				// add expense entries
@@ -954,38 +1006,41 @@ public final class Worker {
 				}
 			}
 
-			// Invoice Vendor  - EAL / AAL or combination - Erstattung?!
-			if (expenseAccts != null && liabilityAccts != null && revenueAccts == null && liabilityAccts.size() == 1) {
-
-				// there is one debitor (creditor) record. There might be one tax
-				// record (unless we ship to switzerland etc) and at least one
-				// liability record. We only need the liability record(s)
-				final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
-
-				if (!loader.getDocNr2FactAccts().containsKey(
-						FactAcctTool.getDocNr(creditorAcct.getRecord_ID(),
-								creditorAcct.getDescription()))) {
-
-					// this record has been removed
-					continue;
-				}
-				// debitorAcct (creditorAcct), revenueAccts(non-tax assetAccts + expenseAccts), taxAccts(tax assetAccts)
-				// create set and remove non-tax factAcct entries - having UoM and qty
-				Set<I_Fact_Acct> revAccts = expenseAccts;
-				// add expense entries
-				/*
-								Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
-								while (itrExp.hasNext()) {
-									I_Fact_Acct entry = itrExp.next();
-									revAccts.add(entry);
-								}
-				 */
-
-				for (final CSV_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecordsCSV(
-						trxName, creditorAcct, revAccts, null)) {
-
-					bewegungsSatzFileInfosCSV.get(KEY).addDataRecordCSV(dataRecord);
-				}
+//			// Invoice Vendor  - EAL / AAL or combination - Erstattung?!
+//			else if (expenseAccts != null && liabilityAccts != null && revenueAccts == null && liabilityAccts.size() == 1) {
+//
+//				// there is one debitor (creditor) record. There might be one tax
+//				// record (unless we ship to switzerland etc) and at least one
+//				// liability record. We only need the liability record(s)
+//				final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
+//
+//				if (!loader.getDocNr2FactAccts().containsKey(
+//						FactAcctTool.getDocNr(creditorAcct.getRecord_ID(),
+//								creditorAcct.getDescription()))) {
+//
+//					// this record has been removed
+//					continue;
+//				}
+//				// debitorAcct (creditorAcct), revenueAccts(non-tax assetAccts + expenseAccts), taxAccts(tax assetAccts)
+//				// create set and remove non-tax factAcct entries - having UoM and qty
+//				Set<I_Fact_Acct> revAccts = expenseAccts;
+//				// add expense entries
+//				/*
+//								Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
+//								while (itrExp.hasNext()) {
+//									I_Fact_Acct entry = itrExp.next();
+//									revAccts.add(entry);
+//								}
+//				 */
+//
+//				for (final CSV_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecordsCSV(
+//						trxName, creditorAcct, revAccts, null)) {
+//
+//					bewegungsSatzFileInfosCSV.get(KEY).addDataRecordCSV(dataRecord);
+//				}
+//			}
+			else {
+				throw new IllegalStateException("Record is not an Invoice");
 			}
 
 		}
@@ -1027,13 +1082,13 @@ public final class Worker {
 //			currentFileNumber++;
 //			currentFileInfo.setFileNumber(currentFileNumber);
 //
-			currentFileInfo.getFileCSV().writeVorlaufsatz(
+			currentFileInfo.getFileCSV(dateFrom).writeVorlaufsatz(
 					currentFileInfo.getFileHeaderCSV());
 
 			for (CSV_Buchungssatz dataRecord : records) {
-				currentFileInfo.getFileCSV().appendBuchungssatz(dataRecord);
+				currentFileInfo.getFileCSV(dateFrom).appendBuchungssatz(dataRecord);
 			}
-			currentFileInfo.getFileCSV().finish();
+			currentFileInfo.getFileCSV(dateFrom).finish();
 		}
 
 		if (exportedRecords == 0) {

@@ -30,6 +30,7 @@ import org.compiere.model.I_C_BP_BankAccount;
 import org.compiere.model.I_C_BPartner;
 import org.compiere.model.I_C_BPartner_Location;
 import org.compiere.model.I_C_Bank;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MCountry;
 import org.compiere.model.MElementValue;
 import org.compiere.model.MLocation;
@@ -289,7 +290,7 @@ public final class MasterDataService implements IMasterDataService {
 		return true;
 	}
 
-	public boolean bPartnerSeenCSV(final int bPartnerId, final String trxName) {
+	public boolean bPartnerSeenCSV(final int bPartnerId, final boolean isSOTrx, final String trxName) {
 
 		if (bPartnerId < 1 || bPartnerIdsExporting.contains(bPartnerId)) {
 			return false;
@@ -321,11 +322,19 @@ public final class MasterDataService implements IMasterDataService {
 			return false;
 		}
 		final int kontonummer = Integer.parseInt(customerAcct.getValue());
-
-//		addDataRecordCSV("\"" + bPartner.getValue() + "\""); // 1
-//		addDataRecordCSV("\"" + bPartner.getName() + "\""); // 2
-		addDataRecordCSV("\"" + Integer.toString(kontonummer) + "\""); // 1 kontonummer
-		addDataRecordCSV("\"" + customerAcct.getName() + "\""); // 2 name
+		MBPartner bp = new MBPartner(Env.getCtx(), bPartnerId, trxName); 
+		String personenkonto = "";
+		if (isSOTrx) {
+			personenkonto = bp.get_ValueAsString("DebtorID");
+		}
+		else {
+			personenkonto = bp.get_ValueAsString("CreditorID");
+		}
+		
+		addDataRecordCSV("\"" + personenkonto + "\""); // 1
+		addDataRecordCSV("\"" + bPartner.getName() + "\""); // 2
+//		addDataRecordCSV("\"" + Integer.toString(kontonummer) + "\""); // 1 kontonummer
+//		addDataRecordCSV("\"" + customerAcct.getName() + "\""); // 2 name
 		addDataRecordCSV(""); // 3 
 		addDataRecordCSV(""); // 4 
 		addDataRecordCSV(""); // 5 
@@ -334,7 +343,7 @@ public final class MasterDataService implements IMasterDataService {
 		addDataRecordCSV(""); // 8
 
 		if (bPartner.getTaxID() != null) {
-		addDataRecordCSV(bPartner.getTaxID().substring(0, 1)); // 9 EU-Land
+		addDataRecordCSV(bPartner.getTaxID().substring(0, 2)); // 9 EU-Land
 		addDataRecordCSV(bPartner.getTaxID().substring(2, bPartner.getTaxID().length())); // 10 EU-UstID
 		}
 		else {

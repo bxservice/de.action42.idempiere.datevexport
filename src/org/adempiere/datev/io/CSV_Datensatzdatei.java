@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 
 import org.adempiere.datev.DatevException;
 import org.adempiere.datev.model.DatensatzFileInfoCSV;
@@ -31,19 +33,20 @@ public abstract class CSV_Datensatzdatei {
 	private final DatensatzFileInfoCSV datensatzFileInfo;
 
 	public CSV_Datensatzdatei(final short myFileNumer,
-			final File targetDirectory, final DatensatzFileInfoCSV myFileInfo)
+			final File targetDirectory, Timestamp dateFrom, final DatensatzFileInfoCSV myFileInfo)
 			throws DatevException {
 
 		fileNumber = myFileNumer;
 
-		DecimalFormat decimalFormat = new DecimalFormat("000");
-
+//		DecimalFormat decimalFormat = new DecimalFormat("000");
+		String startDate = new SimpleDateFormat("yyyyMMdd").format(dateFrom);
+ 
 		String fileName = "";
 		if (fileNumber==(short) 1) {
-			fileName = "buchungsdaten.csv";
+			fileName = "buchungsdaten_" + startDate + ".csv";
 		}
 		else {
-			fileName = "stammdaten.csv";			
+			fileName = "stammdaten_" + startDate + ".csv";			
 		}
 		outputfile = new File(targetDirectory, fileName);
 		datensatzFileInfo = myFileInfo;

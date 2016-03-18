@@ -1,6 +1,7 @@
 package org.adempiere.datev.model.acct;
 
 import java.io.File;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,7 @@ public class BewegungssatzFileInfoCSV extends DatensatzFileInfoCSV {
 		super(myDirectory);
 	}
 
-	public final CSV_Datensatzdatei getFileCSV() {
+	public final CSV_Datensatzdatei getFileCSV(Timestamp dateFrom) {
 		if (fileCSV == null) {
 
 //			if (getFileNumber() == 0 || getDirectoryName() == null) {
@@ -41,7 +42,7 @@ public class BewegungssatzFileInfoCSV extends DatensatzFileInfoCSV {
 //			}
 			setFileNumber((short) 1); // XXX Buchungssatz erzwingen
 			fileCSV = new CSV_Bewegungssatzdatei(getFileNumber(),
-					getDirectoryName(), this);
+					getDirectoryName(), dateFrom, this);
 		}
 		return fileCSV;
 	}

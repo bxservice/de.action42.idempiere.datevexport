@@ -232,28 +232,28 @@ public class DatevDialog extends CPanel implements FormPanel, ActionListener {
 			}
 
 		};
-		final String[] list = exportDir.list(datevFileFilter);
-		if (list.length > 0) {
-			boolean delete = ADialog.ask(window_no, this,
-					QUESTION_DELETE_EXITING);
-			if (!delete) {
-				return;
-			} else {
-
-				for (int i = 0; i < list.length; i++) {
-					final File datevFile = new File(exportDir, list[i]);
-
-					if (!datevFile.delete()) {
-						boolean goOn = ADialog.ask(window_no, this, Msg.getMsg(
-								Env.getCtx(), WARNING_FILE_DELETION_FAILED,
-								new Object[] { datevFile.getAbsolutePath() }));
-						if (!goOn) {
-							return;
-						}
-					}
-				}
-			}
-		}
+//		final String[] list = exportDir.list(datevFileFilter);
+//		if (list.length > 0) {
+//			boolean delete = ADialog.ask(window_no, this,
+//					QUESTION_DELETE_EXITING);
+//			if (!delete) {
+//				return;
+//			} else {
+//
+//				for (int i = 0; i < list.length; i++) {
+//					final File datevFile = new File(exportDir, list[i]);
+//
+//					if (!datevFile.delete()) {
+//						boolean goOn = ADialog.ask(window_no, this, Msg.getMsg(
+//								Env.getCtx(), WARNING_FILE_DELETION_FAILED,
+//								new Object[] { datevFile.getAbsolutePath() }));
+//						if (!goOn) {
+//							return;
+//						}
+//					}
+//				}
+//			}
+//		}
 
 		statusBar.setStatusToolTip("Exportiere nach " + strExportDir);
 		statusBar.setStatusToolTip("Exportiere");

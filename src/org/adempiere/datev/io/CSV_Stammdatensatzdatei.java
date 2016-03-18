@@ -1,6 +1,7 @@
 package org.adempiere.datev.io;
 
 import java.io.File;
+import java.sql.Timestamp;
 
 import org.adempiere.datev.DatevException;
 import org.adempiere.datev.model.CSV_Buchungssatz;
@@ -23,13 +24,14 @@ public class CSV_Stammdatensatzdatei extends CSV_Datensatzdatei {
 	 * {@link #writeVorlaufsatz(CSV_Bewegungsdaten_Vollvorlauf)}.
 	 * 
 	 * @param targetDirectory
+	 * @param dateFrom 
 	 * @throws DatevException
 	 */
 	public CSV_Stammdatensatzdatei(final short myFileNumer,
-			final File targetDirectory, final StammdatensatzFileInfoCSV myFileInfo)
+			final File targetDirectory, Timestamp dateFrom, final StammdatensatzFileInfoCSV myFileInfo)
 			throws DatevException {
 
-		super(myFileNumer, targetDirectory, myFileInfo); 
+		super(myFileNumer, targetDirectory, dateFrom, myFileInfo); 
 	}
 
 	/**

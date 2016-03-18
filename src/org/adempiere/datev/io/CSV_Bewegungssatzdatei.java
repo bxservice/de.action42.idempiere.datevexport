@@ -1,6 +1,7 @@
 package org.adempiere.datev.io;
 
 import java.io.File;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 
 import org.adempiere.datev.DatevException;
@@ -26,14 +27,15 @@ public class CSV_Bewegungssatzdatei extends CSV_Datensatzdatei {
 	 * {@link #writeVorlaufsatz(CSV_Bewegungsdaten_Vollvorlauf)}.
 	 * 
 	 * @param targetDirectory
+	 * @param dateFrom 
 	 * @throws DatevException
 	 */
 	public CSV_Bewegungssatzdatei(final short myFileNumber,
-			final File targetDirectory, final BewegungssatzFileInfoCSV myFileInfo)
+			final File targetDirectory, Timestamp dateFrom, final BewegungssatzFileInfoCSV myFileInfo)
 			throws DatevException {
 
 		
-		super(myFileNumber, targetDirectory, myFileInfo);
+		super(myFileNumber, targetDirectory, dateFrom, myFileInfo);
 	}
 
 	/**

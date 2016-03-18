@@ -19,7 +19,8 @@ public interface IMasterDataService {
 	boolean accountSeen(String accountNo);
 
 	boolean bPartnerSeen(int bPartnerId, String trxName);
-	boolean bPartnerSeenCSV(int bPartnerId, String trxName);
+	boolean bPartnerSeenCSV(int bPartnerId, boolean isSOTrx, String trxName); 
+	
 
 	Collection<StammdatensatzFileInfo> getData();
 	Collection<StammdatensatzFileInfoCSV> getDataCSV();
