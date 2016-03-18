@@ -141,10 +141,15 @@ public final class MasterDataService implements IMasterDataService {
 		final IBPartnerPA bPArtnerPa = Services.get(IBPartnerPA.class);
 		final I_C_BPartner bPartner = bPArtnerPa.retrieveBPartner(bPartnerId,
 				trxName);
-		if (!bPartner.isCustomer()) {
+
+		/* erst mal raus
+		if (!(bPartner.isCustomer() || bPartner.isVendor()) || bPartner.isEmployee() || bPartner.isSalesRep()) {
+
 			throw new IllegalArgumentException("BPartner with id " + bPartnerId
-					+ " is not a customer");
+					+ " is not a customer or vendor (or employee or SalesRep");
 		}
+		*/
+		
 		if (bPartnerIdsExportedEarlier.contains(bPartnerId)) {
 			addDataRecord(OBE_Stammdaten_Buchungssatz.B_ERSTEINGABE_AENDERUNG,
 					"2");
