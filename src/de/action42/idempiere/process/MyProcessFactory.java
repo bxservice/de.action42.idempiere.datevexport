@@ -3,7 +3,6 @@ package de.action42.idempiere.process;
 import java.util.logging.Level;
 
 import org.adempiere.base.IProcessFactory;
-import org.adempiere.base.equinox.EquinoxExtensionLocator;
 import org.compiere.process.ProcessCall;
 import org.compiere.util.CLogger;
 
@@ -21,7 +20,7 @@ public class MyProcessFactory implements IProcessFactory {
 		log.log(Level.WARNING, "MyProcessFactory.newProcessInstance ");
 		ProcessCall process = null;
 		if (className.equals(ExportDATEV.class.getName())) {
-			className = "org.adempiere.process.ExportDATEV";
+			className = "de.action42.idempiere.process.ExportDATEV";
 			//Get Class
 			Class<?> processClass = null;
 			//use context classloader if available
