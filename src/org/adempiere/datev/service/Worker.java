@@ -1095,45 +1095,45 @@ public final class Worker {
 			return;
 		}
 
-		// Set up and write the index file's header
-		final CSV_Datentraegerkennsatz indexHeader = new CSV_Datentraegerkennsatz();
-
-		indexHeader.anzahlDatendateien = currentFileNumber;
-		indexHeader.letzteDatendatei = currentFileNumber;
-		indexHeader.beraternummer = settings.getBeraternummer();
-		indexHeader.datentraegernummer = settings.getDatentraegernummer();
-		indexHeader.beratername = settings.getBeratername();
-
-		final CSV_Verwaltungsdatei indexFile = new CSV_Verwaltungsdatei(
-				outputDir);
-		indexFile.writeKennsatz(indexHeader);
-
-		for (DatensatzFileInfoCSV currentDataFileInfo : allFileInfos) {
-
-			if (currentDataFileInfo.getDataRecordsCSV().isEmpty()) {
-				continue;
-			}
-			CSV_Verwaltungssatz indexRecord;
-			if (currentDataFileInfo instanceof StammdatensatzFileInfoCSV) {
-				indexRecord = new CSV_Verwaltungssatz(
-						CSV_Verwaltungssatz.Type.STAMMDATEN);
-			} else {
-				indexRecord = new CSV_Verwaltungssatz(
-						CSV_Verwaltungssatz.Type.BEWEGUNGSDATEN);
-			}
-			indexRecord.verarbeitungsKennzeichen = "V";
-			indexRecord.dateiNummer = currentDataFileInfo.getFileNumber();
-			indexRecord.vorlaufinformationen = currentDataFileInfo
-					.getFileHeaderCSV().getVorlaufinformationen();
-			indexRecord.letzteBlockNummer = currentDataFileInfo.getBlockCount();
-			indexRecord.letzteBlockPos = currentDataFileInfo.getLastBlockPos();
-			indexRecord.letztePrimanotaSeite = 1;
-			indexRecord.korrekturKennzeichen = " ";
-
-			indexFile.writeVerwaltunssatz(indexRecord);
-		}
-
-		indexFile.finish();
+//		// Set up and write the index file's header
+//		final CSV_Datentraegerkennsatz indexHeader = new CSV_Datentraegerkennsatz();
+//
+//		indexHeader.anzahlDatendateien = currentFileNumber;
+//		indexHeader.letzteDatendatei = currentFileNumber;
+//		indexHeader.beraternummer = settings.getBeraternummer();
+//		indexHeader.datentraegernummer = settings.getDatentraegernummer();
+//		indexHeader.beratername = settings.getBeratername();
+//
+//		final CSV_Verwaltungsdatei indexFile = new CSV_Verwaltungsdatei(
+//				outputDir);
+//		indexFile.writeKennsatz(indexHeader);
+//
+//		for (DatensatzFileInfoCSV currentDataFileInfo : allFileInfos) {
+//
+//			if (currentDataFileInfo.getDataRecordsCSV().isEmpty()) {
+//				continue;
+//			}
+//			CSV_Verwaltungssatz indexRecord;
+//			if (currentDataFileInfo instanceof StammdatensatzFileInfoCSV) {
+//				indexRecord = new CSV_Verwaltungssatz(
+//						CSV_Verwaltungssatz.Type.STAMMDATEN);
+//			} else {
+//				indexRecord = new CSV_Verwaltungssatz(
+//						CSV_Verwaltungssatz.Type.BEWEGUNGSDATEN);
+//			}
+//			indexRecord.verarbeitungsKennzeichen = "V";
+//			indexRecord.dateiNummer = currentDataFileInfo.getFileNumber();
+//			indexRecord.vorlaufinformationen = currentDataFileInfo
+//					.getFileHeaderCSV().getVorlaufinformationen();
+//			indexRecord.letzteBlockNummer = currentDataFileInfo.getBlockCount();
+//			indexRecord.letzteBlockPos = currentDataFileInfo.getLastBlockPos();
+//			indexRecord.letztePrimanotaSeite = 1;
+//			indexRecord.korrekturKennzeichen = " ";
+//
+//			indexFile.writeVerwaltunssatz(indexRecord);
+//		}
+//
+//		indexFile.finish();
 
 		try {
 			DB.commit(true, trxName);

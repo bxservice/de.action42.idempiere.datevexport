@@ -137,9 +137,9 @@ public class ExportDATEV extends SvrProcess
 		int exportedRecords = worker.getExportedRecords();
 		if (exportedRecords == 0) {
 			log.log(Level.INFO, WARNING_NOTHING_EXPORTED);
-			msg = Msg.getMsg(Env.getCtx(), ONE_RECORD_EXPORTED);
+			msg = Msg.getMsg(Env.getCtx(), WARNING_NOTHING_EXPORTED);
 		}
-		if (exportedRecords == 1) {
+		else if (exportedRecords == 1) {
 			msg = Msg.getMsg(Env.getCtx(), ONE_RECORD_EXPORTED);
 		} else {
 			msg = Msg.getMsg(Env.getCtx(), MULTIPLE_RECORD_EXPORTED,
