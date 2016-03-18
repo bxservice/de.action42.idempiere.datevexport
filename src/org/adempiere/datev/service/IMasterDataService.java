@@ -3,6 +3,7 @@ package org.adempiere.datev.service;
 import java.util.Collection;
 
 import org.adempiere.datev.model.masterdata.StammdatensatzFileInfo;
+import org.adempiere.datev.model.masterdata.StammdatensatzFileInfoCSV;
 
 public interface IMasterDataService {
 
@@ -18,8 +19,10 @@ public interface IMasterDataService {
 	boolean accountSeen(String accountNo);
 
 	boolean bPartnerSeen(int bPartnerId, String trxName);
+	boolean bPartnerSeenCSV(int bPartnerId, String trxName);
 
 	Collection<StammdatensatzFileInfo> getData();
+	Collection<StammdatensatzFileInfoCSV> getDataCSV();
 
 	/**
 	 * Tells the master data exporter about an already exported bPartnerId

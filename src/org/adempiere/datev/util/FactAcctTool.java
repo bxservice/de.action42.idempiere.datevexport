@@ -11,7 +11,9 @@ import java.util.regex.Pattern;
 
 import org.adempiere.datev.DatevException;
 import org.adempiere.datev.io.OBE_Verwaltungsdatei;
+import org.adempiere.datev.io.CSV_Verwaltungsdatei;
 import org.adempiere.datev.model.acct.OBE_Bewegungsdaten_Buchungssatz;
+import org.adempiere.datev.model.acct.CSV_Bewegungsdaten_Buchungssatz;
 import org.compiere.model.I_Fact_Acct;
 import org.compiere.util.CLogger;
 
@@ -178,6 +180,87 @@ public final class FactAcctTool {
 		return resultList;
 	}
 
+	public static List<CSV_Bewegungsdaten_Buchungssatz> compressCSV(
+			final List<CSV_Bewegungsdaten_Buchungssatz> input) {
+
+		final List<CSV_Bewegungsdaten_Buchungssatz> resultList = new ArrayList<CSV_Bewegungsdaten_Buchungssatz>();
+
+		final Map<String, CSV_Bewegungsdaten_Buchungssatz> existingRecords = new HashMap<String, CSV_Bewegungsdaten_Buchungssatz>();
+
+		//
+		// Step 1: compress the records by creating one record per key (compare
+		// method 'mkNormalizedKey') and summing up the turnover values.
+		for (final CSV_Bewegungsdaten_Buchungssatz currentRecord : input) {
+
+			final String key = mkNormalizedKeyCSV(currentRecord);
+
+			if (existingRecords.containsKey(key)) {
+
+				final CSV_Bewegungsdaten_Buchungssatz existingRecord = existingRecords
+						.get(key);
+
+				final double newUmsatz;
+
+				if (mkKeyCSV(existingRecord).equals(mkKeyCSV(currentRecord))) {
+					newUmsatz = currentRecord.getUmsatz();
+				} else {
+					// currentRecord's "gegenKonto" is existingRecord's "konto"
+					// and vice versa.
+					newUmsatz = currentRecord.getUmsatz() * -1;
+				}
+
+				existingRecord
+						.setUmsatz(existingRecord.getUmsatz() + newUmsatz);
+				continue;
+			}
+
+			final CSV_Bewegungsdaten_Buchungssatz newRecord = new CSV_Bewegungsdaten_Buchungssatz();
+
+			newRecord.setKonto(currentRecord.getKontoNr());
+			newRecord.setGegenkonto(currentRecord.getBerichtigungsSchluessel(),
+					currentRecord.getSteuerSchluessel(), currentRecord
+							.getGegenkontoNr());
+			newRecord.setBelegfeld1(currentRecord.getBelegfeld1());
+			newRecord.setUmsatz(currentRecord.getUmsatz());
+
+			newRecord.setBelegfeld2(currentRecord.getBelegfeld2());
+			newRecord.setBuchungstextPlain(currentRecord.getBuchungstext());
+			newRecord.setDatum(currentRecord.getDatum());
+			newRecord.setEU_Id(currentRecord.getEuId());
+			newRecord.setEuSteuersatz(currentRecord.getEuSteuersatz());
+			newRecord.setKost1(currentRecord.getKost1());
+			newRecord.setKost2(currentRecord.getKost2());
+			newRecord.setSkonto(currentRecord.getSkonto());
+
+			CSV_Verwaltungsdatei.validate(newRecord);
+
+			existingRecords.put(key, newRecord);
+
+			resultList.add(newRecord);
+		}
+
+		//
+		// step 2: if a turnover value is now negative, switch konto and
+		// gegenkonto to make the amount positive again
+
+		for (final CSV_Bewegungsdaten_Buchungssatz currentRecord : resultList) {
+
+			if (currentRecord.getUmsatz() < 0) {
+
+				final String kontoOld = currentRecord.getKonto();
+
+				currentRecord.setKonto(currentRecord.getGegenkonto().substring(
+						1));
+				currentRecord.setGegenkonto(currentRecord
+						.getBerichtigungsSchluessel(), currentRecord
+						.getSteuerSchluessel(), kontoOld.substring(1));
+
+				currentRecord.setUmsatz(currentRecord.getUmsatz() * -1);
+			}
+		}
+		return resultList;
+	}
+
 	/**
 	 * Returns a string to be used as key when distinguishing new records from
 	 * those that have already been seen.
@@ -204,8 +287,38 @@ public final class FactAcctTool {
 		return key.toString();
 	}
 
+	static String mkNormalizedKeyCSV(
+			final CSV_Bewegungsdaten_Buchungssatz currentRecord) {
+
+		final String kto = currentRecord.getKonto();
+		final String gegenkto = currentRecord.getGegenkonto();
+
+		final String[] accounts = new String[] { kto.substring(1),
+				gegenkto.substring(1) };
+
+		Arrays.sort(accounts);
+
+		final StringBuffer key = new StringBuffer();
+		key.append(currentRecord.getBelegfeld1());
+		key.append(accounts[0]);
+		key.append(accounts[1]);
+
+		return key.toString();
+	}
+
 	private static String mkKey(
 			final OBE_Bewegungsdaten_Buchungssatz currentRecord) {
+
+		final StringBuffer key = new StringBuffer();
+		key.append(currentRecord.getBelegfeld1());
+		key.append(currentRecord.getKonto());
+		key.append(currentRecord.getGegenkonto());
+
+		return key.toString();
+	}
+
+	private static String mkKeyCSV(
+			final CSV_Bewegungsdaten_Buchungssatz currentRecord) {
 
 		final StringBuffer key = new StringBuffer();
 		key.append(currentRecord.getBelegfeld1());

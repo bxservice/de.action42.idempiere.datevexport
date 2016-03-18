@@ -14,10 +14,14 @@ import java.util.Set;
 
 import org.adempiere.bpartner.service.IBPartnerPA;
 import org.adempiere.datev.IDatevSettings;
+import org.adempiere.datev.model.CSV_Vorlaufinformationen;
 import org.adempiere.datev.model.OBE_Vorlaufinformationen;
+import org.adempiere.datev.model.masterdata.CSV_Stammdaten_Buchungssatz;
+import org.adempiere.datev.model.masterdata.CSV_Stammdaten_Kurzvorlauf;
 import org.adempiere.datev.model.masterdata.OBE_Stammdaten_Buchungssatz;
 import org.adempiere.datev.model.masterdata.OBE_Stammdaten_Kurzvorlauf;
 import org.adempiere.datev.model.masterdata.StammdatensatzFileInfo;
+import org.adempiere.datev.model.masterdata.StammdatensatzFileInfoCSV;
 import org.adempiere.datev.service.IMasterDataService;
 import org.adempiere.misc.service.IBankingPA;
 import org.adempiere.misc.service.IPOService;
@@ -59,6 +63,7 @@ public final class MasterDataService implements IMasterDataService {
 	private final Set<Integer> bPartnerIdsExportedEarlier = new HashSet<Integer>();
 
 	private final StammdatensatzFileInfo stammdatensatzFileInfo;
+	private final StammdatensatzFileInfoCSV stammdatensatzFileInfoCSV;
 
 	/**
 	 * 
@@ -79,12 +84,12 @@ public final class MasterDataService implements IMasterDataService {
 		}
 
 		stammdatensatzFileInfo = new StammdatensatzFileInfo(targetDirectory);
+		stammdatensatzFileInfoCSV = new StammdatensatzFileInfoCSV(targetDirectory);
 
 		final int currentYear = new GregorianCalendar()
 				.get(GregorianCalendar.YEAR);
 
 		OBE_Vorlaufinformationen commonHeaderInfo = new OBE_Vorlaufinformationen();
-
 		commonHeaderInfo
 				.setAnwendungsnummer(OBE_Vorlaufinformationen.Anwendungsnummer.FIBUOPOS_STAMMDATEN);
 		commonHeaderInfo.namenskuerzel = settings.getNamenskuerzel();
@@ -101,6 +106,26 @@ public final class MasterDataService implements IMasterDataService {
 		dataFileHeader.setVorlaufinformationen(commonHeaderInfo);
 
 		stammdatensatzFileInfo.setFileHeader(dataFileHeader);
+
+		// CSV
+		CSV_Vorlaufinformationen commonHeaderInfoCSV = new CSV_Vorlaufinformationen();
+		commonHeaderInfoCSV
+		.setAnwendungsnummer(CSV_Vorlaufinformationen.Anwendungsnummer.FIBUOPOS_STAMMDATEN);
+		commonHeaderInfoCSV.namenskuerzel = settings.getNamenskuerzel();
+		commonHeaderInfoCSV.setBeraternummer(settings.getBeraternummer());
+		commonHeaderInfoCSV.setMandantennummer(settings.getMandantennummer());
+		commonHeaderInfoCSV.setAbrechnungsnummer(settings.getAbrechnungsnummer(),
+				currentYear);
+
+		commonHeaderInfoCSV.setPrimanotaSeite(settings.getPrimanotaseite());
+		commonHeaderInfoCSV.passwort = settings.getPasswort();
+
+		CSV_Stammdaten_Kurzvorlauf dataFileHeaderCSV = new CSV_Stammdaten_Kurzvorlauf();
+
+		dataFileHeaderCSV.datentraegernummer = settings.getDatentraegernummer();
+		dataFileHeaderCSV.setVorlaufinformationen(commonHeaderInfoCSV);
+
+		stammdatensatzFileInfoCSV.setFileHeaderCSV(dataFileHeaderCSV);
 	}
 
 	public Collection<StammdatensatzFileInfo> getData() {
@@ -108,6 +133,14 @@ public final class MasterDataService implements IMasterDataService {
 		ArrayList<StammdatensatzFileInfo> result = new ArrayList<StammdatensatzFileInfo>();
 
 		result.add(stammdatensatzFileInfo);
+		return result;
+	}
+
+	public Collection<StammdatensatzFileInfoCSV> getDataCSV() {
+
+		ArrayList<StammdatensatzFileInfoCSV> result = new ArrayList<StammdatensatzFileInfoCSV>();
+
+		result.add(stammdatensatzFileInfoCSV);
 		return result;
 	}
 
@@ -256,7 +289,174 @@ public final class MasterDataService implements IMasterDataService {
 		return true;
 	}
 
-	/**
+	public boolean bPartnerSeenCSV(final int bPartnerId, final String trxName) {
+
+		if (bPartnerId < 1 || bPartnerIdsExporting.contains(bPartnerId)) {
+			return false;
+		}
+
+		final IBPartnerPA bPArtnerPa = Services.get(IBPartnerPA.class);
+		final I_C_BPartner bPartner = bPArtnerPa.retrieveBPartner(bPartnerId,
+				trxName);
+
+		/* erst mal raus
+		if (!(bPartner.isCustomer() || bPartner.isVendor()) || bPartner.isEmployee() || bPartner.isSalesRep()) {
+
+			throw new IllegalArgumentException("BPartner with id " + bPartnerId
+					+ " is not a customer or vendor (or employee or SalesRep");
+		}
+		*/
+		
+//		if (bPartnerIdsExportedEarlier.contains(bPartnerId)) {
+//			addDataRecordCSV(CSV_Stammdaten_Buchungssatz.B_ERSTEINGABE_AENDERUNG,
+//					"2");
+//		} else {
+//			addDataRecordCSV(CSV_Stammdaten_Buchungssatz.B_ERSTEINGABE_AENDERUNG,
+//					"1");
+//		}
+
+		final MElementValue customerAcct = lookupAccountElement(bPartner, trxName);
+		if (customerAcct == null) {
+			logger.warning("Found no customer accounting number for business partner "+ bPartner);
+			return false;
+		}
+		final int kontonummer = Integer.parseInt(customerAcct.getValue());
+
+//		addDataRecordCSV("\"" + bPartner.getValue() + "\""); // 1
+//		addDataRecordCSV("\"" + bPartner.getName() + "\""); // 2
+		addDataRecordCSV("\"" + Integer.toString(kontonummer) + "\""); // 1 kontonummer
+		addDataRecordCSV("\"" + customerAcct.getName() + "\""); // 2 name
+		addDataRecordCSV(""); // 3 
+		addDataRecordCSV(""); // 4 
+		addDataRecordCSV(""); // 5 
+		addDataRecordCSV(""); // 6 
+		addDataRecordCSV("2"); // 7 Adressattyp Unternehmen 
+		addDataRecordCSV(""); // 8
+
+		if (bPartner.getTaxID() != null) {
+		addDataRecordCSV(bPartner.getTaxID().substring(0, 1)); // 9 EU-Land
+		addDataRecordCSV(bPartner.getTaxID().substring(2, bPartner.getTaxID().length())); // 10 EU-UstID
+		}
+		else {
+			addDataRecordCSV(""); // 9 
+			addDataRecordCSV(""); // 10 			
+		}
+		addDataRecordCSV(""); // 11 Anrede
+		addDataRecordCSV(""); // 12 
+		addDataRecordCSV(""); // 13 
+		addDataRecordCSV(""); // 14 
+		addDataRecordCSV(""); // 15 
+
+		final List<I_C_BPartner_Location> bPartnerLocations = bPArtnerPa
+				.retrieveBPartnerLocations(bPartnerId, false, trxName);
+		;
+		if (bPartnerLocations.size() > 0) {
+
+			final MLocation location = MLocation.getBPLocation(Env.getCtx(),
+					bPartnerLocations.get(0).getC_BPartner_Location_ID(), null);
+
+			addDataRecordCSV("\"" + location.getAddress1() + "\""); // 16
+			addDataRecordCSV(""); // 17
+
+			addDataRecordCSV(location.getPostal()); // 18
+			addDataRecordCSV(location.getCity()); // 19
+			addDataRecordCSV(location.getCountry().getCountryCode()); // 20 Land
+
+		}
+
+		addDataRecordCSV(""); // 21
+		addDataRecordCSV(""); // 22
+		addDataRecordCSV(""); // 23
+		addDataRecordCSV(""); // 24
+		addDataRecordCSV(""); // 25
+		addDataRecordCSV(""); // 26
+		addDataRecordCSV(""); // 27
+		addDataRecordCSV(""); // 28
+		addDataRecordCSV(""); // 29
+		addDataRecordCSV(""); // 30
+
+		addDataRecordCSV(""); // 31
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 34
+		addDataRecordCSV(""); // 35
+		addDataRecordCSV(""); // 36
+		addDataRecordCSV(""); // 37
+		addDataRecordCSV(""); // 38
+		addDataRecordCSV(""); // 39
+		addDataRecordCSV(""); // 40
+
+		//		final X_C_Greeting greeting = new X_C_Greeting(Env.getCtx(), bPartner
+//				.getC_Greeting_ID(), null);
+//		addDataRecordCSV(greeting.getName());
+
+		// 110 - 117
+		// TODO: Formatierung der Zahl checken
+//		addDataRecordCSV(bPartner
+//				.getSO_CreditLimit().toPlainString());
+
+		// 119
+
+		// 120 - 122 weglassen
+		// 123 sp�ter neues Feld "DATEV-ID" in Fenster Zahlungsbedingung
+
+		// 125 - 127 weglassen
+
+		final IBankingPA bankingPA = Services.get(IBankingPA.class);
+
+		final List<? extends I_C_BP_BankAccount> bankAccounts = bankingPA
+				.retrieveBankAccountsOfBPartner(bPartnerId, trxName);
+		if (bankAccounts.size() > 0) {
+
+			final int bankId = bankAccounts.get(0).getC_Bank_ID();
+			final I_C_Bank bank1 = bankingPA.retrieveBank(bankId, trxName);
+			addDataRecordCSV(
+					bankAccounts.get(0).getRoutingNo()); // 42
+			if (bank1 != null) {
+				addDataRecordCSV(
+						bank1.getName()); // 43
+			}
+			addDataRecordCSV(
+					bankAccounts.get(0).getAccountNo()); // 44
+			addDataRecordCSV(
+					bank1.getC_Location().getC_Country().getCountryCode()); // 45
+			
+			addDataRecordCSV(""); // 46
+			addDataRecordCSV(""); // 47
+			addDataRecordCSV(bank1.getSwiftCode()); // 48
+			addDataRecordCSV(""); // 49
+			addDataRecordCSV("1"); // 50 Hauptbankverbindung
+		}
+
+		// 134 weglassen
+
+//		addDataRecordCSV(CSV_Stammdaten_Buchungssatz.B_NAME2, bPartner.getName2());
+//
+//		addDataRecordCSV(CSV_Stammdaten_Buchungssatz.B_UST_ID, bPartner.getTaxID());
+//
+//		if (bPartNerLocations.size() > 0) {
+//			MLocation location = MLocation.getBPLocation(Env.getCtx(),
+//					bPartNerLocations.get(0).getC_BPartner_Location_ID(), null);
+//
+//			MCountry country = location.getCountry();
+//			if (country != null) {
+//				addDataRecordCSV(
+//						CSV_Stammdaten_Buchungssatz.B_NATIONALITAETSKENNZEICHEN,
+//						country.getCountryCode());
+//			}
+//			addDataRecordCSV(CSV_Stammdaten_Buchungssatz.B_TELEFONNUMMER,
+//					bPartNerLocations.get(0).getPhone());
+//			addDataRecordCSV(CSV_Stammdaten_Buchungssatz.B_TELEFAX,
+//					bPartNerLocations.get(0).getFax());
+//		}
+
+		addDataRecordCSV("\n"); // XXX Kludge! sollte eigentlich woanders passieren pro geschriebener Zeile
+
+		bPartnerIdsExporting.add(bPartnerId);
+		return true;
+	}
+
+		/**
 	 * 
 	 * @param id
 	 * @param text may be <code>null</code>. In this case nothing is done.
@@ -270,6 +470,22 @@ public final class MasterDataService implements IMasterDataService {
 		bs.setKennziffer(id);
 		bs.setText(text.trim());
 		stammdatensatzFileInfo.addDataRecord(bs);
+	}
+
+	private void addDataRecordCSV(final String text) {
+
+		if (text == null) {
+			return;
+		}
+		CSV_Stammdaten_Buchungssatz bs = new CSV_Stammdaten_Buchungssatz();
+		if (text.equalsIgnoreCase("\n")) {
+			bs.setText(text);
+		}
+		else {
+//			bs.setText(text.trim() + ";");
+			bs.setText(text + ";");
+		}
+		stammdatensatzFileInfoCSV.addDataRecordCSV(bs);
 	}
 
 	private MElementValue lookupAccountElement(final I_C_BPartner bPartner,

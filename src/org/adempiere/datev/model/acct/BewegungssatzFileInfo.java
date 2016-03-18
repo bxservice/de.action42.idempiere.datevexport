@@ -45,13 +45,16 @@ public class BewegungssatzFileInfo extends DatensatzFileInfo {
 		return file;
 	}
 
+	
 	public final OBE_Bewegungsdaten_Vollvorlauf getFileHeader() {
 		return fileHeader;
 	}
 
+
 	public final void setFileHeader(OBE_Bewegungsdaten_Vollvorlauf fileHeader) {
 		this.fileHeader = fileHeader;
 	}
+
 
 	/**
 	 * Adds the given data record to this instance, iff the record's
@@ -79,4 +82,5 @@ public class BewegungssatzFileInfo extends DatensatzFileInfo {
 		return new ArrayList<OBE_Bewegungsdaten_Buchungssatz>(id2DataRecord
 				.values());
 	}
+
 }

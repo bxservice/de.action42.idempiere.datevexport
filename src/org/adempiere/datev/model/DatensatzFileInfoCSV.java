@@ -3,9 +3,9 @@ package org.adempiere.datev.model;
 import java.io.File;
 import java.util.List;
 
-import org.adempiere.datev.io.OBE_Datensatzdatei;
+import org.adempiere.datev.io.CSV_Datensatzdatei;
 
-public abstract class DatensatzFileInfo {
+public abstract class DatensatzFileInfoCSV {
 
 	private final File directoryName;
 
@@ -15,7 +15,7 @@ public abstract class DatensatzFileInfo {
 
 	private short lastBlockPos = 0;
 
-	public DatensatzFileInfo(final File myDirectory) {
+	public DatensatzFileInfoCSV(final File myDirectory) {
 
 		this.directoryName = myDirectory;
 	}
@@ -48,10 +48,11 @@ public abstract class DatensatzFileInfo {
 		return directoryName;
 	}
 
-	public abstract List<? extends OBE_Buchungssatz> getDataRecords();
+	public abstract List<? extends CSV_Buchungssatz> getDataRecordsCSV();
 
-	public abstract OBE_Datensatzdatei getFile();
+	public abstract CSV_Datensatzdatei getFileCSV();
 	
-	public abstract OBE_Vorlaufsatz getFileHeader();
+	public abstract CSV_Vorlaufsatz getFileHeaderCSV();
+
 
 }

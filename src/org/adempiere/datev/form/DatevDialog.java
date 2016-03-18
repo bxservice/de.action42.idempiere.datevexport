@@ -285,7 +285,8 @@ public class DatevDialog extends CPanel implements FormPanel, ActionListener {
 			public void run() {
 
 				try {
-					worker.exportData();
+					//worker.exportData();
+					worker.exportDataCSV();
 				} catch (Exception e) {
 					ADialog.error(window_no, DatevDialog.this, "Error while Exporting!", e.getMessage());
 					e.printStackTrace();

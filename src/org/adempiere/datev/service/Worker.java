@@ -25,6 +25,17 @@ import java.util.logging.Level;
 import org.adempiere.bpartner.service.IBPartnerPA;
 import org.adempiere.datev.DatevException;
 import org.adempiere.datev.IDatevSettings;
+import org.adempiere.datev.io.CSV_Verwaltungsdatei;
+import org.adempiere.datev.model.DatensatzFileInfoCSV;
+import org.adempiere.datev.model.CSV_Buchungssatz;
+import org.adempiere.datev.model.CSV_Vorlaufinformationen;
+import org.adempiere.datev.model.acct.BewegungssatzFileInfoCSV;
+import org.adempiere.datev.model.acct.CSV_Bewegungsdaten_Buchungssatz;
+import org.adempiere.datev.model.acct.CSV_Bewegungsdaten_Vollvorlauf;
+import org.adempiere.datev.model.acct.CSV_Datentraegerkennsatz;
+import org.adempiere.datev.model.acct.CSV_Verwaltungssatz;
+import org.adempiere.datev.model.masterdata.CSV_Stammdaten_Buchungssatz;
+import org.adempiere.datev.model.masterdata.StammdatensatzFileInfoCSV;
 import org.adempiere.datev.io.OBE_Verwaltungsdatei;
 import org.adempiere.datev.model.DatensatzFileInfo;
 import org.adempiere.datev.model.OBE_Buchungssatz;
@@ -85,6 +96,34 @@ public final class Worker {
 		}
 	};
 
+	private static Comparator<CSV_Buchungssatz> acctRecordCompCSV = new Comparator<CSV_Buchungssatz>() {
+
+		public int compare(CSV_Buchungssatz o1, CSV_Buchungssatz o2) {
+
+			if (o1 instanceof CSV_Stammdaten_Buchungssatz) {
+				return -1;
+			}
+
+			String docNo1 = ((CSV_Bewegungsdaten_Buchungssatz) o1)
+					.getBelegfeld1();
+			String docNo2 = ((CSV_Bewegungsdaten_Buchungssatz) o2)
+					.getBelegfeld1();
+
+			String docNoPrefix1 = docNo1.split("_")[0];
+			String docNoPrefix2 = docNo2.split("_")[0];
+
+			if (docNoPrefix1.equals(docNoPrefix2) && !docNo1.equals(docNo2)) {
+				if (docNo1.endsWith("_WP") && docNoPrefix1.equals(docNoPrefix2)) {
+					return 1;
+				}
+				if (docNo2.endsWith("_WP") && docNoPrefix1.equals(docNoPrefix2)) {
+					return -1;
+				}
+			}
+			return docNoPrefix1.compareTo(docNoPrefix2);
+		}
+	};
+
 	public static final String KEY = "key";
 	/** Static Logger */
 	private static final CLogger LOG = CLogger.getCLogger(Worker.class);
@@ -94,6 +133,7 @@ public final class Worker {
 	 * Contains the "headers" of different output files for accounting records.
 	 */
 	private Map<String, BewegungssatzFileInfo> bewegungsSatzFileInfos = new Hashtable<String, BewegungssatzFileInfo>();
+	private Map<String, BewegungssatzFileInfoCSV> bewegungsSatzFileInfosCSV = new Hashtable<String, BewegungssatzFileInfoCSV>();
 
 	private final Timestamp dateFrom, dateTo;
 
@@ -316,6 +356,167 @@ public final class Worker {
 		return result;
 	}
 
+	public List<CSV_Bewegungsdaten_Buchungssatz> createFactAcctRecordsCSV(
+			final String trxName, final I_Fact_Acct debitorAcct,
+			final Set<I_Fact_Acct> revenueAccts, final Set<I_Fact_Acct> taxAccts)
+			throws DatevException {
+
+		if (masterDataService == null) {
+			throw new IllegalStateException("masterDataService may not be null");
+		}
+
+		final IAccountingPA accountingPA = Services.get(IAccountingPA.class);
+
+		final I_C_ElementValue debitorAcctInfo = accountingPA
+				.retrieveElementValue(debitorAcct.getAccount_ID(), trxName);
+
+		final Map<Integer, Set<I_Fact_Acct>> tax2ToAcct = sortByTaxId(revenueAccts);
+
+		final List<CSV_Bewegungsdaten_Buchungssatz> result = new ArrayList<CSV_Bewegungsdaten_Buchungssatz>();
+
+		for (final int taxId : tax2ToAcct.keySet()) {
+
+			final List<CSV_Bewegungsdaten_Buchungssatz> resultPerTaxId = new ArrayList<CSV_Bewegungsdaten_Buchungssatz>();
+
+			for (final I_Fact_Acct revenueAcct : tax2ToAcct.get(taxId)) {
+
+				// register the bPartner with our master data service
+				masterDataService.bPartnerSeenCSV(revenueAcct.getC_BPartner_ID(),
+						trxName);
+
+				final I_C_ElementValue revenueAcctInfo = accountingPA
+						.retrieveElementValue(revenueAcct.getAccount_ID(),
+								trxName);
+
+				// Generell immer Soll an Haben (Konto an Gegenkonto)
+				// "Haben" (=Credit!) im Erloeskonto <=> "Soll" im
+				// Debitorenkonto <=> Erloeskonto ist Gegenkonto
+				final BigDecimal revCredit = revenueAcct.getAmtAcctCr();
+				final BigDecimal revDebit = revenueAcct.getAmtAcctDr();
+
+				final Object[] turnOverAmtAndDebToRev = getTurnOverAmtAndDebToRev(
+						revCredit, revDebit);
+
+				if (turnOverAmtAndDebToRev.length == 0) {
+					continue;
+				}
+
+				final BigDecimal turnOverAmount = (BigDecimal) turnOverAmtAndDebToRev[0];
+				final boolean deb2rev = (Boolean) turnOverAmtAndDebToRev[1];
+				//
+				// use the debitor or creditor id instead of the generic account
+				// id,
+				// if appropriate.
+
+				final String debitorAcctType = debitorAcctInfo.getAccountType();
+				final I_C_BPartner debitor = Services.get(IBPartnerPA.class)
+						.retrieveBPartner(debitorAcct.getC_BPartner_ID(),
+								trxName);
+
+				final IPOService poService = Services.get(IPOService.class);
+
+				String debitorAcctTmp = debitorAcctInfo.getValue();
+
+				if (X_C_ElementValue.ACCOUNTTYPE_Asset.equals(debitorAcctType)) {
+					final Integer debitorId = (Integer) poService.getValue(
+							debitor, C_BPartner_DEBITORID);
+					if (debitorId != null) {
+						debitorAcctTmp = debitorId.toString();
+					}
+				} else if (X_C_ElementValue.ACCOUNTTYPE_Liability
+						.equals(debitorAcctType)) {
+					final Integer creditorId = (Integer) poService.getValue(
+							debitor, C_BPartner_CREDITORID);
+					if (creditorId != null) {
+						debitorAcctTmp = creditorId.toString();
+					}
+				}
+				final String debitorAccount = debitorAcctTmp;
+
+				final String revenueAccount = revenueAcctInfo.getValue();
+
+				masterDataService.accountSeen(debitorAccount);
+				masterDataService.accountSeen(revenueAccount);
+
+				final CSV_Bewegungsdaten_Buchungssatz dataRecord = new CSV_Bewegungsdaten_Buchungssatz();
+
+				dataRecord.setUmsatz(turnOverAmount.doubleValue());
+
+				if (deb2rev) {
+					dataRecord.setKonto(debitorAccount);
+					// dataRecord.setGegenkonto('1', taxKey, revenueAccount);
+					dataRecord.setGegenkonto('0', '0', revenueAccount);
+				} else {
+					dataRecord.setKonto(revenueAccount);
+					// dataRecord.setGegenkonto('1', taxKey, debitorAccount);
+					dataRecord.setGegenkonto('0', '0', debitorAccount);
+				}
+
+				dataRecord.setDatum(debitorAcct.getDateAcct());
+
+				if (FactAcctTool.isCancellation(debitorAcct)) {
+
+					final String canceledDocNo = FactAcctTool
+							.getCancelledDocNo(debitorAcct.getRecord_ID(),
+									debitorAcct.getDescription());
+					dataRecord.setBelegfeld1(Integer.parseInt(canceledDocNo));
+
+				} else {
+
+					final IInvoicePA invoicePA = Services.get(IInvoicePA.class);
+					final I_C_Invoice invoice = invoicePA.retrieveInvoice(
+							debitorAcct.getRecord_ID(), trxName);
+
+					final int docNo1 = FactAcctTool.getDocNoInt(invoice
+							.getDocumentNo());
+					dataRecord.setBelegfeld1(docNo1);
+				}
+				dataRecord.setBuchungstext(debitor.getName());
+
+				CSV_Verwaltungsdatei.validate(dataRecord);
+
+				resultPerTaxId.add(dataRecord);
+
+				final I_C_Datev_ExportLog exportLog = createLogRecord(trxName,
+						"fact_acct", FactAcctTool.getDocNr(debitorAcct
+								.getRecord_ID(), debitorAcct.getDescription()),
+						revenueAcct.getRecord_ID(), revenueAcct.getDateAcct());
+
+				id2LogRecord.put(dataRecord.getId(), exportLog);
+			}
+
+			final List<CSV_Bewegungsdaten_Buchungssatz> compressedResult = FactAcctTool
+					.compressCSV(resultPerTaxId);
+			if (!resultPerTaxId.isEmpty() && compressedResult.size() != 1) {
+				throw new IllegalStateException(
+						"After compression there are still "
+								+ compressedResult.size()
+								+ " records for taxId " + taxId);
+			}
+
+			//
+			// Get the tax info
+			final I_Fact_Acct taxAcct = findTaxAcct(taxAccts, taxId);
+			if (taxAcct != null) {
+
+				final Object[] turnOverAmtAndDevToRev = getTurnOverAmtAndDebToRev(
+						taxAcct.getAmtAcctCr(), taxAcct.getAmtAcctDr());
+
+				if (turnOverAmtAndDevToRev.length == 0) {
+					continue;
+				}
+				final BigDecimal turnOverAmount = (BigDecimal) turnOverAmtAndDevToRev[0];
+
+				final CSV_Bewegungsdaten_Buchungssatz comprRecord = compressedResult
+						.get(0);
+				comprRecord.setUmsatz(comprRecord.getUmsatz()
+						+ turnOverAmount.doubleValue());
+			}
+			result.addAll(compressedResult);
+		}
+		return result;
+	}
+
 	private static Object[] getTurnOverAmtAndDebToRev(
 			final BigDecimal revCredit, final BigDecimal revDebit) {
 
@@ -436,7 +637,7 @@ public final class Worker {
 					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Expense);
 
 			// ARL - Invoice Customer
-			if (assetAccts != null && assetAccts.size() == 1 && liabilityAccts.size() == 1 && revenueAccts != null && revenueAccts.size() >= 1) {
+			if (assetAccts != null && assetAccts.size() == 1 && liabilityAccts != null && liabilityAccts.size() == 1 && revenueAccts != null && revenueAccts.size() >= 1) {
 
 				// there is one debitor record. There might be one tax
 				// record (unless we ship to switzerland etc) and at least one
@@ -463,7 +664,7 @@ public final class Worker {
 
 							// there is one debitor (creditor) record. There might be one tax
 							// record (unless we ship to switzerland etc) and at least one
-							// revenue record. We only need the revenue record(s)
+							// liability record. We only need the liability record(s)
 							final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
 
 							if (!loader.getDocNr2FactAccts().containsKey(
@@ -493,10 +694,12 @@ public final class Worker {
 								}
 							}
 							// add expense entries
-							Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
-							while (itrExp.hasNext()) {
-								I_Fact_Acct entry = itrExp.next();
-								revAccts.add(entry);
+							if (expenseAccts != null) {
+								Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
+								while (itrExp.hasNext()) {
+									I_Fact_Acct entry = itrExp.next();
+									revAccts.add(entry);
+								}
 							}
 
 							for (final OBE_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecords(
@@ -506,6 +709,39 @@ public final class Worker {
 							}
 						}
 			
+						// Invoice Vendor  - EAL / AAL or combination - Erstattung?!
+						if (expenseAccts != null && liabilityAccts != null && revenueAccts == null && liabilityAccts.size() == 1) {
+
+							// there is one debitor (creditor) record. There might be one tax
+							// record (unless we ship to switzerland etc) and at least one
+							// liability record. We only need the liability record(s)
+							final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
+
+							if (!loader.getDocNr2FactAccts().containsKey(
+									FactAcctTool.getDocNr(creditorAcct.getRecord_ID(),
+											creditorAcct.getDescription()))) {
+
+								// this record has been removed
+								continue;
+							}
+							// debitorAcct (creditorAcct), revenueAccts(non-tax assetAccts + expenseAccts), taxAccts(tax assetAccts)
+							// create set and remove non-tax factAcct entries - having UoM and qty
+							Set<I_Fact_Acct> revAccts = expenseAccts;
+							// add expense entries
+							/*
+								Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
+								while (itrExp.hasNext()) {
+									I_Fact_Acct entry = itrExp.next();
+									revAccts.add(entry);
+								}
+							*/
+							
+							for (final OBE_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecords(
+									trxName, creditorAcct, revAccts, null)) {
+
+								bewegungsSatzFileInfos.get(KEY).addDataRecord(dataRecord);
+							}
+						}
 
 		}
 
@@ -612,6 +848,255 @@ public final class Worker {
 		}
 	}
 
+	public synchronized void exportDataCSV() {
+
+		if (processor == null) {
+			throw new IllegalStateException("processor may not be null");
+		}
+		if (loader == null) {
+			throw new IllegalStateException("loader may not be null");
+		}
+		exportStartTime = SystemTime.asTimestamp();
+
+		final String trxName = "dateExport_" + Long.toString(exportStartTime.getTime());
+
+		// Part2: Get the data, and insert them into our datev api's objects
+		//
+		loader.load(dateFrom, dateTo, trxName);
+
+		final Map<Integer, Map<String, Set<I_Fact_Acct>>> recordId2FactAccts = loader
+				.getResult();
+
+		for (final int recordId : recordId2FactAccts.keySet()) {
+
+			final Set<I_Fact_Acct> assetAccts = recordId2FactAccts.get(
+					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Asset);
+
+			final Set<I_Fact_Acct> revenueAccts = recordId2FactAccts.get(
+					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Revenue);
+
+			final Set<I_Fact_Acct> liabilityAccts = recordId2FactAccts.get(
+					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Liability);
+
+			final Set<I_Fact_Acct> expenseAccts = recordId2FactAccts.get(
+					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Expense);
+
+			// ARL - Invoice Customer
+			if (assetAccts != null && assetAccts.size() == 1 && liabilityAccts != null && liabilityAccts.size() == 1 && revenueAccts != null && revenueAccts.size() >= 1) {
+
+				// there is one debitor record. There might be one tax
+				// record (unless we ship to switzerland etc) and at least one
+				// revenue record. We only need the revenue record(s)
+				final I_Fact_Acct debitorAcct = assetAccts.iterator().next();
+
+				if (!loader.getDocNr2FactAccts().containsKey(
+						FactAcctTool.getDocNr(debitorAcct.getRecord_ID(),
+								debitorAcct.getDescription()))) {
+
+					// this record has been removed
+					continue;
+				}
+
+				for (final CSV_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecordsCSV(
+						trxName, debitorAcct, revenueAccts, liabilityAccts)) {
+
+					bewegungsSatzFileInfosCSV.get(KEY).addDataRecordCSV(dataRecord);
+				}
+			}
+
+			// Invoice Vendor  - EAL / AAL or combination
+			if (assetAccts != null && liabilityAccts != null && revenueAccts == null && assetAccts.size() >= 1 && liabilityAccts.size() == 1) {
+
+				// there is one debitor (creditor) record. There might be one tax
+				// record (unless we ship to switzerland etc) and at least one
+				// liability record. We only need the liability record(s)
+				final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
+
+				if (!loader.getDocNr2FactAccts().containsKey(
+						FactAcctTool.getDocNr(creditorAcct.getRecord_ID(),
+								creditorAcct.getDescription()))) {
+
+					// this record has been removed
+					continue;
+				}
+				// debitorAcct (creditorAcct), revenueAccts(non-tax assetAccts + expenseAccts), taxAccts(tax assetAccts)
+				// create set and remove non-tax factAcct entries - having UoM and qty
+				Set<I_Fact_Acct> taxAccts = assetAccts;
+				Iterator<I_Fact_Acct> itrTax = taxAccts.iterator();
+				while (itrTax.hasNext()) {
+					I_Fact_Acct entry = itrTax.next();
+					if (entry.getC_UOM_ID() > 0 && entry.getQty().compareTo(Env.ZERO) != 0) {
+						itrTax.remove();
+					}
+				}
+				// create set and remove tax related entries - having no UoM and no qty 
+				Set<I_Fact_Acct> revAccts = assetAccts;
+				Iterator<I_Fact_Acct> itrRev = revAccts.iterator();
+				while (itrRev.hasNext()) {
+					I_Fact_Acct entry = itrRev.next();
+					if (entry.getC_UOM_ID() == 0 && entry.getQty().compareTo(Env.ZERO) == 0) {
+						itrRev.remove();
+					}
+				}
+				// add expense entries
+				if (expenseAccts != null) {
+					Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
+					while (itrExp.hasNext()) {
+						I_Fact_Acct entry = itrExp.next();
+						revAccts.add(entry);
+					}
+				}
+
+				for (final CSV_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecordsCSV(
+						trxName, creditorAcct, revAccts, taxAccts)) {
+
+					bewegungsSatzFileInfosCSV.get(KEY).addDataRecordCSV(dataRecord);
+				}
+			}
+
+			// Invoice Vendor  - EAL / AAL or combination - Erstattung?!
+			if (expenseAccts != null && liabilityAccts != null && revenueAccts == null && liabilityAccts.size() == 1) {
+
+				// there is one debitor (creditor) record. There might be one tax
+				// record (unless we ship to switzerland etc) and at least one
+				// liability record. We only need the liability record(s)
+				final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
+
+				if (!loader.getDocNr2FactAccts().containsKey(
+						FactAcctTool.getDocNr(creditorAcct.getRecord_ID(),
+								creditorAcct.getDescription()))) {
+
+					// this record has been removed
+					continue;
+				}
+				// debitorAcct (creditorAcct), revenueAccts(non-tax assetAccts + expenseAccts), taxAccts(tax assetAccts)
+				// create set and remove non-tax factAcct entries - having UoM and qty
+				Set<I_Fact_Acct> revAccts = expenseAccts;
+				// add expense entries
+				/*
+								Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
+								while (itrExp.hasNext()) {
+									I_Fact_Acct entry = itrExp.next();
+									revAccts.add(entry);
+								}
+				 */
+
+				for (final CSV_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecordsCSV(
+						trxName, creditorAcct, revAccts, null)) {
+
+					bewegungsSatzFileInfosCSV.get(KEY).addDataRecordCSV(dataRecord);
+				}
+			}
+
+		}
+
+		logger.info("Created " + id2LogRecord.size() + " records");
+
+		//
+		// insert the exported records into our log table
+		for (final I_C_Datev_ExportLog datevExportLog : id2LogRecord.values()) {
+			Services.get(IPOService.class).save(datevExportLog, trxName);
+		}
+
+		bewegungsSatzFileInfosCSV.put(KEY, processor
+				.processCSV(getBewegungsSatzFileInfoCSV(KEY)));
+
+		//
+		// End of Part2
+		// Part3: iterate through the data and write it to the data
+		// file(s)
+		//
+		short currentFileNumber = 1;
+		exportedRecords = 0;
+
+		Collection<DatensatzFileInfoCSV> allFileInfos = new ArrayList<DatensatzFileInfoCSV>(
+				bewegungsSatzFileInfosCSV.values());
+		allFileInfos.addAll(masterDataService.getDataCSV());
+
+		for (DatensatzFileInfoCSV currentFileInfo : allFileInfos) {
+
+			final List<CSV_Buchungssatz> records = new ArrayList<CSV_Buchungssatz>(
+					currentFileInfo.getDataRecordsCSV());
+			if (records.isEmpty()) {
+				continue;
+			}
+
+			Collections.sort(records, acctRecordCompCSV);
+
+			exportedRecords += records.size();
+//			currentFileNumber++;
+//			currentFileInfo.setFileNumber(currentFileNumber);
+//
+			currentFileInfo.getFileCSV().writeVorlaufsatz(
+					currentFileInfo.getFileHeaderCSV());
+
+			for (CSV_Buchungssatz dataRecord : records) {
+				currentFileInfo.getFileCSV().appendBuchungssatz(dataRecord);
+			}
+			currentFileInfo.getFileCSV().finish();
+		}
+
+		if (exportedRecords == 0) {
+			return;
+		}
+
+		// Set up and write the index file's header
+		final CSV_Datentraegerkennsatz indexHeader = new CSV_Datentraegerkennsatz();
+
+		indexHeader.anzahlDatendateien = currentFileNumber;
+		indexHeader.letzteDatendatei = currentFileNumber;
+		indexHeader.beraternummer = settings.getBeraternummer();
+		indexHeader.datentraegernummer = settings.getDatentraegernummer();
+		indexHeader.beratername = settings.getBeratername();
+
+		final CSV_Verwaltungsdatei indexFile = new CSV_Verwaltungsdatei(
+				outputDir);
+		indexFile.writeKennsatz(indexHeader);
+
+		for (DatensatzFileInfoCSV currentDataFileInfo : allFileInfos) {
+
+			if (currentDataFileInfo.getDataRecordsCSV().isEmpty()) {
+				continue;
+			}
+			CSV_Verwaltungssatz indexRecord;
+			if (currentDataFileInfo instanceof StammdatensatzFileInfoCSV) {
+				indexRecord = new CSV_Verwaltungssatz(
+						CSV_Verwaltungssatz.Type.STAMMDATEN);
+			} else {
+				indexRecord = new CSV_Verwaltungssatz(
+						CSV_Verwaltungssatz.Type.BEWEGUNGSDATEN);
+			}
+			indexRecord.verarbeitungsKennzeichen = "V";
+			indexRecord.dateiNummer = currentDataFileInfo.getFileNumber();
+			indexRecord.vorlaufinformationen = currentDataFileInfo
+					.getFileHeaderCSV().getVorlaufinformationen();
+			indexRecord.letzteBlockNummer = currentDataFileInfo.getBlockCount();
+			indexRecord.letzteBlockPos = currentDataFileInfo.getLastBlockPos();
+			indexRecord.letztePrimanotaSeite = 1;
+			indexRecord.korrekturKennzeichen = " ";
+
+			indexFile.writeVerwaltunssatz(indexRecord);
+		}
+
+		indexFile.finish();
+
+		try {
+			DB.commit(true, trxName);
+		} catch (SQLException e) {
+			LOG.log(Level.SEVERE,
+					"Storing of the exported records in log table failed.", e);
+			try {
+				DB.rollback(false, trxName);
+			} catch (SQLException e1) {
+			}
+			throw new DatevException(e);
+		}
+	}
+
+	public BewegungssatzFileInfoCSV getBewegungsSatzFileInfoCSV(final String key) {
+		return bewegungsSatzFileInfosCSV.get(key);
+	}
+
 	public BewegungssatzFileInfo getBewegungsSatzFileInfo(final String key) {
 		return bewegungsSatzFileInfos.get(key);
 	}
@@ -650,6 +1135,31 @@ public final class Worker {
 		accountingDataFileInfo.setFileHeader(dataFileHeader);
 
 		bewegungsSatzFileInfos.put(KEY, accountingDataFileInfo);
+
+		//CSV
+		CSV_Vorlaufinformationen commonHeaderInfoCSV = new CSV_Vorlaufinformationen();
+		commonHeaderInfoCSV.setAnwendungsnummer(CSV_Vorlaufinformationen.Anwendungsnummer.FIBUOPOS_VOLLVORL);
+		commonHeaderInfoCSV.namenskuerzel = settings.getNamenskuerzel();
+		commonHeaderInfoCSV.setBeraternummer(settings.getBeraternummer());
+		commonHeaderInfoCSV.setMandantennummer(settings.getMandantennummer());
+		commonHeaderInfoCSV.setAbrechnungsnummer(settings.getAbrechnungsnummer(),
+				currentYear);
+
+		commonHeaderInfoCSV.setDatumVon(dateFrom);
+		commonHeaderInfoCSV.setDatumBis(dateTo);
+		commonHeaderInfoCSV.setPrimanotaSeite(settings.getPrimanotaseite());
+		commonHeaderInfoCSV.passwort = settings.getPasswort();
+
+		CSV_Bewegungsdaten_Vollvorlauf dataFileHeaderCSV = new CSV_Bewegungsdaten_Vollvorlauf();
+		dataFileHeaderCSV.datentraegernummer = settings.getDatentraegernummer();
+		dataFileHeaderCSV.setVorlaufinformationen(commonHeaderInfoCSV);
+
+		BewegungssatzFileInfoCSV accountingDataFileInfoCSV = new BewegungssatzFileInfoCSV(
+				outputDir);
+		accountingDataFileInfoCSV.setFileHeaderCSV(dataFileHeaderCSV);
+
+		bewegungsSatzFileInfosCSV.put(KEY, accountingDataFileInfoCSV);
+
 
 		// no files created yet...
 	}
