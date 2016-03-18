@@ -1,6 +1,7 @@
 package org.adempiere.datev.model.masterdata;
 
 import java.io.File;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -57,7 +58,7 @@ public class StammdatensatzFileInfoCSV extends DatensatzFileInfoCSV {
 				.values());
 	}
 
-	public final CSV_Stammdatensatzdatei getFileCSV() {
+	public final CSV_Stammdatensatzdatei getFileCSV(Timestamp dateFrom) {
 		if (fileCSV == null) {
 
 //			if (getFileNumber() == 0 || getDirectoryName() == null) {
@@ -68,7 +69,7 @@ public class StammdatensatzFileInfoCSV extends DatensatzFileInfoCSV {
 //			}
 			setFileNumber((short) 2); // XXX Stammdatensatz erzwingen
 			fileCSV = new CSV_Stammdatensatzdatei(getFileNumber(),
-					getDirectoryName(), this);
+					getDirectoryName(), dateFrom, this);
 		}
 		return fileCSV;
 	}
