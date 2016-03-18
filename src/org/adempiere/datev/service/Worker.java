@@ -16,6 +16,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +49,7 @@ import org.compiere.model.I_Fact_Acct;
 import org.compiere.model.X_C_ElementValue;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 
 public final class Worker {
 
@@ -421,15 +423,25 @@ public final class Worker {
 
 		for (final int recordId : recordId2FactAccts.keySet()) {
 
-			final Set<I_Fact_Acct> debitorAccts = recordId2FactAccts.get(
+			final Set<I_Fact_Acct> assetAccts = recordId2FactAccts.get(
 					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Asset);
 
-			if (debitorAccts != null && debitorAccts.size() == 1) {
+			final Set<I_Fact_Acct> revenueAccts = recordId2FactAccts.get(
+					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Revenue);
+
+			final Set<I_Fact_Acct> liabilityAccts = recordId2FactAccts.get(
+					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Liability);
+
+			final Set<I_Fact_Acct> expenseAccts = recordId2FactAccts.get(
+					recordId).get(X_C_ElementValue.ACCOUNTTYPE_Expense);
+
+			// ARL - Invoice Customer
+			if (assetAccts != null && assetAccts.size() == 1 && liabilityAccts.size() == 1 && revenueAccts != null && revenueAccts.size() >= 1) {
 
 				// there is one debitor record. There might be one tax
 				// record (unless we ship to switzerland etc) and at least one
 				// revenue record. We only need the revenue record(s)
-				final I_Fact_Acct debitorAcct = debitorAccts.iterator().next();
+				final I_Fact_Acct debitorAcct = assetAccts.iterator().next();
 
 				if (!loader.getDocNr2FactAccts().containsKey(
 						FactAcctTool.getDocNr(debitorAcct.getRecord_ID(),
@@ -438,18 +450,63 @@ public final class Worker {
 					// this record has been removed
 					continue;
 				}
-				final Set<I_Fact_Acct> revenueAccts = recordId2FactAccts.get(
-						recordId).get(X_C_ElementValue.ACCOUNTTYPE_Revenue);
-
-				final Set<I_Fact_Acct> taxAccts = recordId2FactAccts.get(
-						recordId).get(X_C_ElementValue.ACCOUNTTYPE_Liability);
 
 				for (final OBE_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecords(
-						trxName, debitorAcct, revenueAccts, taxAccts)) {
+						trxName, debitorAcct, revenueAccts, liabilityAccts)) {
 
 					bewegungsSatzFileInfos.get(KEY).addDataRecord(dataRecord);
 				}
 			}
+			 
+			// Invoice Vendor  - EAL / AAL or combination
+						if (assetAccts != null && liabilityAccts != null && revenueAccts == null && assetAccts.size() >= 1 && liabilityAccts.size() == 1) {
+
+							// there is one debitor (creditor) record. There might be one tax
+							// record (unless we ship to switzerland etc) and at least one
+							// revenue record. We only need the revenue record(s)
+							final I_Fact_Acct creditorAcct = liabilityAccts.iterator().next();
+
+							if (!loader.getDocNr2FactAccts().containsKey(
+									FactAcctTool.getDocNr(creditorAcct.getRecord_ID(),
+											creditorAcct.getDescription()))) {
+
+								// this record has been removed
+								continue;
+							}
+							// debitorAcct (creditorAcct), revenueAccts(non-tax assetAccts + expenseAccts), taxAccts(tax assetAccts)
+							// create set and remove non-tax factAcct entries - having UoM and qty
+							Set<I_Fact_Acct> taxAccts = assetAccts;
+							Iterator<I_Fact_Acct> itrTax = taxAccts.iterator();
+							while (itrTax.hasNext()) {
+								I_Fact_Acct entry = itrTax.next();
+								if (entry.getC_UOM_ID() > 0 && entry.getQty().compareTo(Env.ZERO) != 0) {
+									itrTax.remove();
+								}
+							}
+							// create set and remove tax related entries - having no UoM and no qty 
+							Set<I_Fact_Acct> revAccts = assetAccts;
+							Iterator<I_Fact_Acct> itrRev = revAccts.iterator();
+							while (itrRev.hasNext()) {
+								I_Fact_Acct entry = itrRev.next();
+								if (entry.getC_UOM_ID() == 0 && entry.getQty().compareTo(Env.ZERO) == 0) {
+									itrRev.remove();
+								}
+							}
+							// add expense entries
+							Iterator<I_Fact_Acct> itrExp = expenseAccts.iterator();
+							while (itrExp.hasNext()) {
+								I_Fact_Acct entry = itrExp.next();
+								revAccts.add(entry);
+							}
+
+							for (final OBE_Bewegungsdaten_Buchungssatz dataRecord : createFactAcctRecords(
+									trxName, creditorAcct, revAccts, taxAccts)) {
+
+								bewegungsSatzFileInfos.get(KEY).addDataRecord(dataRecord);
+							}
+						}
+			
+
 		}
 
 		logger.info("Created " + id2LogRecord.size() + " records");
