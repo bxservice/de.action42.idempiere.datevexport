@@ -339,12 +339,12 @@ public final class MasterDataService implements IMasterDataService {
 		addDataRecordCSV(""); // 4 
 		addDataRecordCSV(""); // 5 
 		addDataRecordCSV(""); // 6 
-		addDataRecordCSV("2"); // 7 Adressattyp Unternehmen 
+		addDataRecordCSV("\"" + "2" + "\""); // 7 Adressattyp Unternehmen 
 		addDataRecordCSV(""); // 8
 
 		if (bPartner.getTaxID() != null) {
-		addDataRecordCSV(bPartner.getTaxID().substring(0, 2)); // 9 EU-Land
-		addDataRecordCSV(bPartner.getTaxID().substring(2, bPartner.getTaxID().length())); // 10 EU-UstID
+		addDataRecordCSV("\"" + bPartner.getTaxID().substring(0, 2) + "\";"); // 9 EU-Land
+		addDataRecordCSV("\"" + bPartner.getTaxID().substring(2, bPartner.getTaxID().length()) + "\";"); // 10 EU-UstID
 		}
 		else {
 			addDataRecordCSV(""); // 9 
@@ -367,9 +367,9 @@ public final class MasterDataService implements IMasterDataService {
 			addDataRecordCSV("\"" + location.getAddress1() + "\""); // 16
 			addDataRecordCSV(""); // 17
 
-			addDataRecordCSV(location.getPostal()); // 18
-			addDataRecordCSV(location.getCity()); // 19
-			addDataRecordCSV(location.getCountry().getCountryCode()); // 20 Land
+			addDataRecordCSV("\"" + location.getPostal() + "\""); // 18
+			addDataRecordCSV("\"" + location.getCity() + "\""); // 19
+			addDataRecordCSV("\"" + location.getCountry().getCountryCode() + "\""); // 20 Land
 
 		}
 
@@ -395,7 +395,144 @@ public final class MasterDataService implements IMasterDataService {
 		addDataRecordCSV(""); // 39
 		addDataRecordCSV(""); // 40
 
-		//		final X_C_Greeting greeting = new X_C_Greeting(Env.getCtx(), bPartner
+		addDataRecordCSV(""); // 41
+		addDataRecordCSV(""); // 22
+		addDataRecordCSV(""); // 23
+		addDataRecordCSV(""); // 24
+		addDataRecordCSV(""); // 25
+		addDataRecordCSV(""); // 26
+		addDataRecordCSV(""); // 27
+		addDataRecordCSV(""); // 28
+		addDataRecordCSV(""); // 29
+		addDataRecordCSV(""); // 50
+
+		addDataRecordCSV(""); // 51
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 34
+		addDataRecordCSV(""); // 35
+		addDataRecordCSV(""); // 36
+		addDataRecordCSV(""); // 37
+		addDataRecordCSV(""); // 38
+		addDataRecordCSV(""); // 39
+		addDataRecordCSV(""); // 60
+
+		addDataRecordCSV(""); // 61
+		addDataRecordCSV(""); // 22
+		addDataRecordCSV(""); // 23
+		addDataRecordCSV(""); // 24
+		addDataRecordCSV(""); // 25
+		addDataRecordCSV(""); // 26
+		addDataRecordCSV(""); // 27
+		addDataRecordCSV(""); // 28
+		addDataRecordCSV(""); // 29
+		addDataRecordCSV(""); // 70
+
+		addDataRecordCSV(""); // 71
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 34
+		addDataRecordCSV(""); // 35
+		addDataRecordCSV(""); // 36
+		addDataRecordCSV(""); // 37
+		addDataRecordCSV(""); // 38
+		addDataRecordCSV(""); // 39
+		addDataRecordCSV(""); // 80
+
+		addDataRecordCSV(""); // 81
+		addDataRecordCSV(""); // 22
+		addDataRecordCSV(""); // 23
+		addDataRecordCSV(""); // 24
+		addDataRecordCSV(""); // 25
+		addDataRecordCSV(""); // 26
+		addDataRecordCSV(""); // 27
+		addDataRecordCSV(""); // 28
+		addDataRecordCSV(""); // 29
+		addDataRecordCSV(""); // 90
+
+		addDataRecordCSV(""); // 91
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 34
+		addDataRecordCSV(""); // 35
+		addDataRecordCSV(""); // 36
+		addDataRecordCSV(""); // 37
+		addDataRecordCSV(""); // 38
+		addDataRecordCSV(""); // 39
+		addDataRecordCSV(""); // 100
+
+		addDataRecordCSV(""); // 101
+		addDataRecordCSV(""); // 22
+		addDataRecordCSV(""); // 23
+		addDataRecordCSV(""); // 24
+		addDataRecordCSV(""); // 25
+		addDataRecordCSV(""); // 26
+		addDataRecordCSV(""); // 27
+		addDataRecordCSV(""); // 28
+		addDataRecordCSV(""); // 29
+		addDataRecordCSV(""); // 110
+
+		addDataRecordCSV(""); // 111
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 34
+		addDataRecordCSV(""); // 35
+		addDataRecordCSV(""); // 36
+		addDataRecordCSV(""); // 37
+		addDataRecordCSV(""); // 38
+		addDataRecordCSV(""); // 39
+		addDataRecordCSV(""); // 120
+
+		addDataRecordCSV(""); // 121
+		addDataRecordCSV(""); // 22
+		addDataRecordCSV(""); // 23
+		addDataRecordCSV(""); // 24
+		addDataRecordCSV(""); // 25
+		addDataRecordCSV(""); // 26
+		addDataRecordCSV(""); // 27
+		addDataRecordCSV(""); // 28
+		addDataRecordCSV(""); // 29
+		addDataRecordCSV(""); // 130
+
+		addDataRecordCSV(""); // 131
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 34
+		addDataRecordCSV(""); // 35
+		addDataRecordCSV(""); // 36
+		addDataRecordCSV(""); // 37
+		addDataRecordCSV(""); // 38
+		addDataRecordCSV(""); // 39
+		addDataRecordCSV(""); // 140
+
+		addDataRecordCSV(""); // 141
+		addDataRecordCSV(""); // 22
+		addDataRecordCSV(""); // 23
+		addDataRecordCSV(""); // 24
+		addDataRecordCSV(""); // 25
+		addDataRecordCSV(""); // 26
+		addDataRecordCSV(""); // 27
+		addDataRecordCSV(""); // 28
+		addDataRecordCSV(""); // 29
+		addDataRecordCSV(""); // 150
+
+		addDataRecordCSV(""); // 151
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 34
+		addDataRecordCSV(""); // 35
+		addDataRecordCSV(""); // 36
+		addDataRecordCSV(""); // 37
+		addDataRecordCSV(""); // 38
+		addDataRecordCSV(""); // 39
+		addDataRecordCSV(""); // 160
+
+		addDataRecordCSV(""); // 161
+		addDataRecordCSV(""); // 32
+		addDataRecordCSV(""); // 33
+		addDataRecordCSV(""); // 164
+
+//		final X_C_Greeting greeting = new X_C_Greeting(Env.getCtx(), bPartner
 //				.getC_Greeting_ID(), null);
 //		addDataRecordCSV(greeting.getName());
 
