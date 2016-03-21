@@ -332,7 +332,7 @@ public final class MasterDataService implements IMasterDataService {
 			personenkonto = bp.get_ValueAsString("CreditorID");
 		}
 		
-		addDataRecordCSV("\"" + personenkonto + "\""); // 1
+		addDataRecordCSV("\"" + personenkonto + "\""); // 1 Konto
 		addDataRecordCSV("\"" + bPartner.getName() + "\""); // 2
 //		addDataRecordCSV("\"" + Integer.toString(kontonummer) + "\""); // 1 kontonummer
 //		addDataRecordCSV("\"" + customerAcct.getName() + "\""); // 2 name
@@ -344,8 +344,8 @@ public final class MasterDataService implements IMasterDataService {
 		addDataRecordCSV(""); // 8
 
 		if (bPartner.getTaxID() != null) {
-		addDataRecordCSV("\"" + bPartner.getTaxID().substring(0, 2) + "\";"); // 9 EU-Land
-		addDataRecordCSV("\"" + bPartner.getTaxID().substring(2, bPartner.getTaxID().length()) + "\";"); // 10 EU-UstID
+		addDataRecordCSV("\"" + bPartner.getTaxID().substring(0, 2) + "\""); // 9 EU-Land
+		addDataRecordCSV("\"" + bPartner.getTaxID().substring(2, bPartner.getTaxID().length()) + "\""); // 10 EU-UstID
 		}
 		else {
 			addDataRecordCSV(""); // 9 
@@ -373,7 +373,7 @@ public final class MasterDataService implements IMasterDataService {
 			addDataRecordCSV("\"" + location.getCountry().getCountryCode() + "\""); // 20 Land
 
 		}
-
+		/* start simple
 		addDataRecordCSV(""); // 21
 		addDataRecordCSV(""); // 22
 		addDataRecordCSV(""); // 23
@@ -597,8 +597,8 @@ public final class MasterDataService implements IMasterDataService {
 //					bPartNerLocations.get(0).getFax());
 //		}
 
-		addDataRecordCSV("\n"); // XXX Kludge! sollte eigentlich woanders passieren pro geschriebener Zeile
-
+		*/
+		addDataRecordCSV(CSV_Stammdaten_Buchungssatz.SATZENDE); // XXX Kludge! sollte eigentlich woanders passieren pro geschriebener Zeile
 		bPartnerIdsExporting.add(bPartnerId);
 		return true;
 	}
