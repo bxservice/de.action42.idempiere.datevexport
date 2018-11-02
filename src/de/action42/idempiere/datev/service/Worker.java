@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import de.metas.adempiere.bpartner.service.IBPartnerPA;
@@ -862,7 +863,8 @@ public final class Worker {
 		}
 		exportStartTime = SystemTime.asTimestamp();
 
-		final String trxName = "dateExport_" + Long.toString(exportStartTime.getTime());
+		// a42 / AK - #120 trxName zu kurz
+		final String trxName = "dateExport_" + Long.toString(exportStartTime.getTime()) + "_" + UUID.randomUUID().toString();
 
 		// Part2: Get the data, and insert them into our datev api's objects
 		//
