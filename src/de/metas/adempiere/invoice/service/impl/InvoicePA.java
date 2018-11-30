@@ -27,7 +27,7 @@ public class InvoicePA implements IInvoicePA {
 
 	public I_C_InvoiceLine createInvoiceLine(final I_C_Invoice invoice) {
 
-		return new MInvoiceLine(getMInvoice(invoice));
+		return MInvoiceLine.createFrom(getMInvoice(invoice));
 	}
 
 	public I_C_InvoiceLine createInvoiceLine(final String trxName) {
