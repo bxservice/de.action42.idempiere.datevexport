@@ -3,6 +3,7 @@ package de.action42.idempiere.datev.service;
 import static de.action42.idempiere.util.DatevCustomColNames.C_BPartner_CREDITORID;
 import static de.action42.idempiere.util.DatevCustomColNames.C_BPartner_DEBITORID;
 
+import de.action42.ak.model.X_XX_CostCenter;
 import java.io.File;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -33,6 +34,7 @@ import org.compiere.model.I_C_ElementValue;
 import org.compiere.model.I_C_Invoice;
 import org.compiere.model.I_Fact_Acct;
 import org.compiere.model.MInvoice;
+import org.compiere.model.MInvoiceLine;
 import org.compiere.model.X_C_ElementValue;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -473,8 +475,36 @@ public final class Worker {
 					final int docNo1 = FactAcctTool.getDocNoInt(invoice
 							.getDocumentNo());
 					dataRecord.setBelegfeld1(docNo1);
-				}
+					// XXX a42 - AK set Kost1 
+					int[] lines = MInvoiceLine.getAllIDs("C_InvoiceLine", "C_Invoice_ID="+invoice.getC_Invoice_ID(), trxName);
+					// FIXME we assume same cost center in all invoice lines - might be wrong!
+					MInvoiceLine line = new MInvoiceLine(Env.getCtx(),lines[0],trxName);
+					int costcenterID = line.getUser1_ID();
+					if (costcenterID > 0) {
+						X_XX_CostCenter costcenter = new X_XX_CostCenter(Env.getCtx(), costcenterID, trxName);
+						dataRecord.setKost1('f' + costcenter.getValue());
+					}
+					// End a42 - AK^M
+			}
 				dataRecord.setBuchungstext(debitor.getName());
+
+				// XXX a42 - AK - VAT-ID
+				String taxID = debitor.getTaxID();
+				if (taxID != null) {
+					String taxCountry = taxID.substring(0, 2);
+					String taxNo = taxID.substring(2, taxID.length());
+					taxNo = taxNo.replaceAll(" ", "");
+					if (taxNo.length() > 13) {
+						taxNo = taxNo.substring(0,13);
+					}
+					if (taxNo.length() < 13) {
+						for (int i = taxNo.length(); i < 13; i++) {
+							taxNo = taxNo + ' ';
+						}
+					}
+					dataRecord.setEU_Id(taxCountry, taxNo);
+				}
+				// end a42
 
 				CSV_Verwaltungsdatei.validate(dataRecord);
 
@@ -492,6 +522,7 @@ public final class Worker {
 
 			final List<CSV_Bewegungsdaten_Buchungssatz> compressedResult = FactAcctTool
 					.compressCSV(resultPerTaxId);
+            // a42 - AK - FIXME - Ticket #15 compare must be per user1_id + per tax_id
 			if (!resultPerTaxId.isEmpty() && compressedResult.size() != 1) {
 				throw new IllegalStateException(
 						"After compression there are still "

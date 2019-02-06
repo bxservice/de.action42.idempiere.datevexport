@@ -284,6 +284,10 @@ public final class FactAcctTool {
 		key.append(currentRecord.getBelegfeld1());
 		key.append(accounts[0]);
 		key.append(accounts[1]);
+        // XXX a42 - AK use Kost1
+        // Ticket #15 / Ticket #18
+//      key.append(currentRecord.getKost1());
+        // End a42 - AK
 
 		return key.toString();
 	}
@@ -303,6 +307,10 @@ public final class FactAcctTool {
 		key.append(currentRecord.getBelegfeld1());
 		key.append(accounts[0]);
 		key.append(accounts[1]);
+        // XXX a42 - AK use Kost1
+        // Ticket #15 / Ticket #18
+//      key.append(currentRecord.getKost1());
+        // End a42 - AK
 
 		return key.toString();
 	}
@@ -314,6 +322,10 @@ public final class FactAcctTool {
 		key.append(currentRecord.getBelegfeld1());
 		key.append(currentRecord.getKonto());
 		key.append(currentRecord.getGegenkonto());
+        // XXX a42 - AK use Kost1
+        // Ticket #15 / Ticket #18
+//      key.append(currentRecord.getKost1());
+        // End a42 - AK
 
 		return key.toString();
 	}
@@ -325,6 +337,10 @@ public final class FactAcctTool {
 		key.append(currentRecord.getBelegfeld1());
 		key.append(currentRecord.getKonto());
 		key.append(currentRecord.getGegenkonto());
+        // XXX a42 - AK use Kost1
+        // Ticket #15 / Ticket #18
+//      key.append(currentRecord.getKost1());
+        // End a42 - AK
 
 		return key.toString();
 	}

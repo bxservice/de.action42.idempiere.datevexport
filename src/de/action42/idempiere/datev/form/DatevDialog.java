@@ -15,6 +15,7 @@ import java.util.GregorianCalendar;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import org.compiere.apps.ADialog;
 import org.compiere.apps.StatusBar;
@@ -53,6 +54,8 @@ public class DatevDialog extends CPanel implements FormPanel, ActionListener {
 	public static final String ONE_RECORD_EXPORTED = "datev.one_record_exported";
 	public static final String MULTIPLE_RECORD_EXPORTED = "datev.multiple_records_exported";
 	public static final String ORG = "AD_Org_ID";
+    // XXX a42 - AK -Abrechnungsnummer
+	public static final String ABRECHNUNGSNUMMER = "datev.abrechnungsnummer";
 
 	private static final long serialVersionUID = 5984372803441104882L;
 
@@ -60,6 +63,12 @@ public class DatevDialog extends CPanel implements FormPanel, ActionListener {
 
 	private int window_no;
 
+    // XXX a42 - AK -Abrechnungsnummer
+    private final JLabel lAbrechnungsnummer = new JLabel();
+
+    private final JTextField fAbrechnungsnummer = new JTextField();
+            
+    //
 	private final JLabel lDateFrom = new JLabel();
 
 	private final VDate fDateFrom = new VDate();
@@ -159,6 +168,18 @@ public class DatevDialog extends CPanel implements FormPanel, ActionListener {
 			cOrgFilter.addItem(org);
 		}
 
+		// XXX a42 - AK -Abrechnungsnummer
+        lAbrechnungsnummer.setText(Msg.translate(Env.getCtx(), ABRECHNUNGSNUMMER));
+        lAbrechnungsnummer.setLabelFor(fAbrechnungsnummer);
+        fAbrechnungsnummer.setColumns(6);
+        this.add(lAbrechnungsnummer, new GridBagConstraints(0, 4, 1, 1, 0.0, 0.0,
+                        GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5,
+                                        5, 5, 5), 0, 0));
+        this.add(fAbrechnungsnummer, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0,
+                        GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5,
+                                        5, 5, 5), 0, 0));
+
+
 		//
 		// "Export" button
 		this.add(bExport, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0,
@@ -209,6 +230,17 @@ public class DatevDialog extends CPanel implements FormPanel, ActionListener {
 			ADialog.error(window_no, this, "", ERROR_DATES_ORDERING);
 			return;
 		}
+        // XXX a42 - AK
+        String abrechnungsnummer = fAbrechnungsnummer.getText();
+        if (abrechnungsnummer.length() > 6) {
+                abrechnungsnummer = abrechnungsnummer.substring(0, 6);
+        }
+        if (abrechnungsnummer.length() < 6) {
+                for (int i=abrechnungsnummer.length(); i < 6 ; i++) {
+                        abrechnungsnummer = '0' + abrechnungsnummer;
+                }
+        }
+        // end a42
 		statusBar.setStatusToolTip(Msg.getMsg(Env.getCtx(), SELECT_TARGET_DIR));
 
 		final String startDir = Ini.getAdempiereHome() + File.separator
@@ -261,6 +293,10 @@ public class DatevDialog extends CPanel implements FormPanel, ActionListener {
 		this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
 		final IDatevSettings settings = new DatevProperties();
+
+        // XXX a42 - AK
+        settings.setAbrechnungsnummer(abrechnungsnummer);
+        //
 
 		final KeyNamePair selectedOrg = (KeyNamePair) cOrgFilter
 				.getSelectedItem();

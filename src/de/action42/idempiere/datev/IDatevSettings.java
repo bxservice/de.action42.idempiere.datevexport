@@ -17,4 +17,8 @@ public interface IDatevSettings {
 	String getNamenskuerzel();
 	
 	short getPrimanotaseite();
+	
+	// XXX a42 - AK
+	void setAbrechnungsnummer(String abrechnungsnummer);
+	//
 }

@@ -61,4 +61,10 @@ public class DatevProperties implements IDatevSettings {
 		return Short.parseShort(properties.getProperty("datev.primanotaseite"));
 	}
 
+	// XXX a42 - AK - make abrechnungsnummer changeable
+    public void setAbrechnungsnummer(String abrechnungsnummer) {
+    	properties.setProperty("datev.abrechnungsnummer",abrechnungsnummer);
+    	return;
+    }
+
 }
