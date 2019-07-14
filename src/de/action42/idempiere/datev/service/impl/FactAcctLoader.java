@@ -57,14 +57,15 @@ public class FactAcctLoader implements IFactAcctLoader {
 		return recordId2FactAccts;
 	}
 
-	public void load(final Timestamp dateFrom, final Timestamp dateTo,
+	public void load(final Timestamp dateFrom, final Timestamp dateTo, 
+			final boolean exportAP, final boolean exportAR, 
 			final String trxName) {
 
 		final HashSet<String> alreadyExported = loadAlreadyExported(dateFrom,
 				dateTo, trxName);
 
 		// get the data and put them into our hash tables
-		loadFactActData(dateFrom, dateTo, trxName);
+		loadFactActData(dateFrom, dateTo, exportAP, exportAR, trxName);
 
 		// remove records that belong to cancellations
 		removeNonExportableFactAccts(alreadyExported, trxName);
@@ -131,29 +132,46 @@ public class FactAcctLoader implements IFactAcctLoader {
 	/**
 	 * Gets records from the fact_acct database table out of the db and stores
 	 * then in docNr2FactAccts for later processing.
+	 * @param exportAP 
+	 * @param exportAR 
 	 * 
 	 * @param trxName
 	 * @throws DatevException
 	 *             if any exception is caught in this method.
 	 */
-	private void loadFactActData(final Timestamp dateFrom,
-			final Timestamp dateTo, final String trxName) throws DatevException {
+	private void loadFactActData(final Timestamp dateFrom, final Timestamp dateTo, 
+			boolean exportAP, boolean exportAR, final String trxName) throws DatevException {
 
-		final String factAcct_sql = "SELECT f.* "
-				+ "FROM fact_acct f LEFT JOIN ad_table t on f.ad_table_id=t.ad_table_id "
-				+ "WHERE t.tablename='C_Invoice' "
-				+ " AND f.ad_client_id=? "
-				+ " AND (?=0 OR f.ad_org_id=?) "
-				+ " AND f.dateacct>=? AND f.dateacct<=?";
-
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT f.* ")
+				.append("FROM fact_acct f LEFT JOIN ad_table t on f.ad_table_id=t.ad_table_id ")
+				.append("LEFT JOIN C_Invoice i ON (f.RECORD_ID=i.C_INVOICE_ID) ") 
+				.append("WHERE t.tablename='C_Invoice' ")
+				.append(" AND f.ad_client_id=").append(clientId)
+				.append(" AND (0=").append(orgId)
+				.append(" OR f.ad_org_id=").append(orgId)
+				.append(") AND f.dateacct BETWEEN ? AND ?")
+				.append(" AND i.ISSOTRX='Y'") 
+				.append(" AND 'Y'='").append(exportAR ? "Y" : "N").append("' ") 
+				.append("UNION ")
+				.append("SELECT f.* ") 
+				.append("FROM fact_acct f LEFT JOIN ad_table t on f.ad_table_id=t.ad_table_id ")
+				.append("LEFT JOIN C_Invoice i ON (f.RECORD_ID=i.C_INVOICE_ID) ") 
+				.append("WHERE t.tablename='C_Invoice' ")
+				.append(" AND f.ad_client_id=").append(clientId)
+				.append(" AND (0=").append(orgId)
+				.append(" OR f.ad_org_id=").append(orgId)
+				.append(") AND f.dateacct BETWEEN ? AND ?")
+				.append(" AND i.ISSOTRX='N' ")
+				.append(" AND 'Y'='").append(exportAP ? "Y" : "N").append("' "); 
+		String factAcctSql = sql.toString();
 		PreparedStatement pstmt = null;
 		try {
-			pstmt = DB.prepareStatement(factAcct_sql, trxName);
-			pstmt.setLong(1, clientId);
-			pstmt.setLong(2, orgId);
-			pstmt.setLong(3, orgId);
-			pstmt.setTimestamp(4, dateFrom);
-			pstmt.setTimestamp(5, dateTo);
+			pstmt = DB.prepareStatement(factAcctSql, trxName);
+			pstmt.setTimestamp(1, dateFrom);
+			pstmt.setTimestamp(2, dateTo);
+			pstmt.setTimestamp(3, dateFrom);
+			pstmt.setTimestamp(4, dateTo);
 
 			ResultSet rs = pstmt.executeQuery();
 
@@ -247,7 +265,7 @@ public class FactAcctLoader implements IFactAcctLoader {
 			pstmt = null;
 		} catch (Exception e) {
 			LOG.log(Level.SEVERE, "Retrieval of booking data failed. SQL: "
-					+ factAcct_sql, e);
+					+ factAcctSql, e);
 			throw new DatevException(
 					"Retrieval of booking data failed. See issue log for details.");
 		}

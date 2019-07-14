@@ -63,7 +63,7 @@ public class ExportDATEV extends SvrProcess
 	public static final String WARNING_FILE_DELETION_FAILED = "datev.warn_file_deletion_failed";
 	public static final String ONE_RECORD_EXPORTED = "datev.one_record_exported";
 	public static final String MULTIPLE_RECORD_EXPORTED = "datev.multiple_records_exported";
-	public static final String ORG = "AD_Org_ID";
+	public static final String ORG = "AD_Org_ID";	
 
 	@SuppressWarnings("unused")
 	private static final long serialVersionUID = 5984471103441104882L;
@@ -74,6 +74,9 @@ public class ExportDATEV extends SvrProcess
 	/** Effective						*/
 	private Timestamp		m_DateFrom = null;
 	private Timestamp		m_DateTo = null;
+
+	private boolean m_exportAR = false;
+	private boolean m_exportAP = false;
 
 	/**
 	 *  Prepare - e.g., get Parameters.
@@ -91,6 +94,10 @@ public class ExportDATEV extends SvrProcess
 					m_DateFrom = (Timestamp)para[i].getParameter();
 					m_DateTo = (Timestamp)para[i].getParameter_To();
 				}
+			else if (name.equals("ExportAP"))
+				m_exportAP = "Y".equals(para[i].getParameter());
+			else if (name.equals("ExportAR"))
+				m_exportAR = "Y".equals(para[i].getParameter());
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
 		}
@@ -117,7 +124,10 @@ public class ExportDATEV extends SvrProcess
 				exportDir, //
 				m_AD_Org_ID, //
 				m_DateFrom, //
-				m_DateTo, settings);
+				m_DateTo,
+				m_exportAP,
+				m_exportAR,
+				settings);
 
 		final IMasterDataService masterDataService = new MasterDataService(
 				exportDir, settings);

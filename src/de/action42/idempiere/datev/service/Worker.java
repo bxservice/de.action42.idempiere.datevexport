@@ -141,6 +141,9 @@ public final class Worker {
 	private Map<String, BewegungssatzFileInfoCSV> bewegungsSatzFileInfosCSV = new Hashtable<String, BewegungssatzFileInfoCSV>();
 
 	private final Timestamp dateFrom, dateTo;
+	
+	/** what do we have to export **/
+	private final Boolean exportAP, exportAR;
 
 	/**
 	 * After an export this is the number of fact_acct records that were
@@ -166,14 +169,24 @@ public final class Worker {
 
 	/**
 	 * This constructor is intended for unit testing of single methods only.
+	 * @param settings2 
+	 * @param m_exportAR 
+	 * @param m_exportAP 
+	 * @param m_DateTo 
+	 * @param m_DateFrom 
+	 * @param m_AD_Org_ID 
+	 * @param exportDir 
 	 */
-	Worker() {
+	Worker(File exportDir, int m_AD_Org_ID, Timestamp m_DateFrom, Timestamp m_DateTo, boolean m_exportAP, boolean m_exportAR, IDatevSettings settings2) {
 		dateFrom = SystemTime.asTimestamp();
 		dateTo = SystemTime.asTimestamp();
+		exportAP = true;
+		exportAR = true;
 	}
 
 	public Worker(final File myOutputdir, final int myOrgId,
 			final Date myDateFrom, final Date myDateTo,
+			final Boolean myExportAP, final Boolean myExportAR,
 			final IDatevSettings mySettings) {
 
 		outputDir = myOutputdir;
@@ -181,6 +194,8 @@ public final class Worker {
 
 		dateFrom = new Timestamp(myDateFrom.getTime());
 		dateTo = new Timestamp(myDateTo.getTime());
+		exportAP = myExportAP;
+		exportAR = myExportAR;
 		settings = mySettings;
 
 		init();
@@ -653,7 +668,7 @@ public final class Worker {
 
 		// Part2: Get the data, and insert them into our datev api's objects
 		//
-		loader.load(dateFrom, dateTo, trxName);
+		loader.load(dateFrom, dateTo, exportAP, exportAR, trxName);
 
 		final Map<Integer, Map<String, Set<I_Fact_Acct>>> recordId2FactAccts = loader
 				.getResult();
@@ -899,7 +914,7 @@ public final class Worker {
 
 		// Part2: Get the data, and insert them into our datev api's objects
 		//
-		loader.load(dateFrom, dateTo, trxName);
+		loader.load(dateFrom, dateTo, exportAP, exportAR, trxName);
 
 		final Map<Integer, Map<String, Set<I_Fact_Acct>>> recordId2FactAccts = loader
 				.getResult();

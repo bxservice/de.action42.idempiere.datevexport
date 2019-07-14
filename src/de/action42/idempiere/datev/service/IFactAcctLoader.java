@@ -8,7 +8,7 @@ import org.compiere.model.I_Fact_Acct;
 
 public interface IFactAcctLoader {
 
-	void load( Timestamp dateFrom,  Timestamp dateTo,String trxName);
+	void load( Timestamp dateFrom,  Timestamp dateTo, boolean exportAP, boolean exportAR, String trxName);
 
 	Map<Integer, Map<String, Set<I_Fact_Acct>>> getResult();
 
