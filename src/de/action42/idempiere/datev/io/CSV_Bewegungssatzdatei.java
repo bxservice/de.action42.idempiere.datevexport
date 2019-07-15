@@ -67,20 +67,20 @@ public class CSV_Bewegungssatzdatei extends CSV_Datensatzdatei {
 		}
 		final StringBuffer sb = new StringBuffer();
 
-		sb.append(bewegungsSatz.getUmsatzStr() + ";"); // 1 
-		sb.append("\"" + "S" + "\";"); // 2
+		sb.append(bewegungsSatz.getUmsatzStr() + ";"); // 1 - Umsatz
+		sb.append("\"" + "S" + "\";"); // 2 - Soll/Haben-Kennzeichen
 		// XXX Waehrung ermitteln!
-		sb.append("\"" + "EUR" + "\";"); // 3
-		sb.append(";"); // 4 Kurs
-		sb.append(";"); // 5 Basis-Umsatz
-		sb.append(";"); // 6 Waehrung Basis-Umsatz
-		sb.append("\"" + bewegungsSatz.getKonto() + "\";"); // 7
-		sb.append("\"" + bewegungsSatz.getGegenkonto() + "\";"); // 8
+		sb.append("\"" + "EUR" + "\";"); // 3 - WKZ Umsatz
+		sb.append(";"); // 4 - Kurs
+		sb.append(";"); // 5 - Basis-Umsatz
+		sb.append(";"); // 6 - WKZ Basis-Umsatz
+		sb.append("\"" + bewegungsSatz.getKonto() + "\";"); // 7 - Kontonummer
+		sb.append("\"" + bewegungsSatz.getGegenkonto() + "\";"); // 8 - Gegenkonto (ohne BU-Schlüssel)
 		sb.append(";"); // 9 BU-Schluessel
-		sb.append("\"" + bewegungsSatz.getDatum() + "\";"); // 10
-		sb.append("\"" + bewegungsSatz.getBelegfeld1() + "\";"); // 11
-		sb.append(";"); // 12
-		sb.append(";"); // 13
+		sb.append("\"" + bewegungsSatz.getDatum() + "\";"); // 10 - Belegdatum
+		sb.append("\"" + bewegungsSatz.getBelegfeld1() + "\";"); // 11 - Belegfeld 1
+		sb.append("\"" + bewegungsSatz.getBuchungstext() + "\";"); // 12 - Buchungstext
+		sb.append("\"" + bewegungsSatz.getKost1() + "\";"); // 13 - Kost 1
 		sb.append(CSV_Bewegungsdaten_Buchungssatz.SATZENDE);
 
 		addStringBuffer(sb);
