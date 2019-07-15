@@ -81,6 +81,7 @@ public class CSV_Bewegungssatzdatei extends CSV_Datensatzdatei {
 		sb.append("\"" + bewegungsSatz.getBelegfeld1() + "\";"); // 11 - Belegfeld 1
 		sb.append("\"" + bewegungsSatz.getBuchungstext() + "\";"); // 12 - Buchungstext
 		sb.append("\"" + bewegungsSatz.getKost1() + "\";"); // 13 - Kost 1
+		sb.append("\"" + bewegungsSatz.getEuId() + "\";"); // 14 - UStID		
 		sb.append(CSV_Bewegungsdaten_Buchungssatz.SATZENDE);
 
 		addStringBuffer(sb);
