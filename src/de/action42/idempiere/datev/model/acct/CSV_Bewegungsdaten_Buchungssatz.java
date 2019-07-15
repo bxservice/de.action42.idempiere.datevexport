@@ -173,10 +173,10 @@ public class CSV_Bewegungsdaten_Buchungssatz extends CSV_Buchungssatz {
 	public void setEU_Id(final String countryCode, final String taxId) {
 
 		StringBuffer sbEuId = new StringBuffer();
-		sbEuId.append('\272');
+		//sbEuId.append('\272');
 		sbEuId.append(countryCode);
 		sbEuId.append(taxId);
-		sbEuId.append('\034');
+		//sbEuId.append('\034');
 
 		euId = sbEuId.toString();
 	}

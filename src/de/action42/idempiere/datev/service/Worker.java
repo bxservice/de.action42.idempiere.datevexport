@@ -497,9 +497,9 @@ public final class Worker {
 					int costcenterID = line.getUser1_ID();
 					if (costcenterID > 0) {
 						X_XX_CostCenter costcenter = new X_XX_CostCenter(Env.getCtx(), costcenterID, trxName);
-						dataRecord.setKost1('f' + costcenter.getValue());
+						dataRecord.setKost1(costcenter.getValue());
 					}
-					// End a42 - AK^M
+					// End a42 - AK
 			}
 				dataRecord.setBuchungstext(debitor.getName());
 
