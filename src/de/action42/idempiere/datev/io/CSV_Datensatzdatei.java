@@ -8,14 +8,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 
 import de.action42.idempiere.datev.DatevException;
 import de.action42.idempiere.datev.model.CSV_Buchungssatz;
 import de.action42.idempiere.datev.model.CSV_Vorlaufsatz;
 import de.action42.idempiere.datev.model.DatensatzFileInfoCSV;
-import de.action42.idempiere.datev.model.acct.CSV_Bewegungsdaten_Buchungssatz;
 
 public abstract class CSV_Datensatzdatei {
 

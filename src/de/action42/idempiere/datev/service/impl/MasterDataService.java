@@ -322,7 +322,7 @@ public final class MasterDataService implements IMasterDataService {
 			logger.warning("Found no customer accounting number for business partner "+ bPartner);
 			return false;
 		}
-		final int kontonummer = Integer.parseInt(customerAcct.getValue());
+		//final int kontonummer = Integer.parseInt(customerAcct.getValue());
 		MBPartner bp = new MBPartner(Env.getCtx(), bPartnerId, trxName); 
 		String personenkonto = "";
 		if (isSOTrx) {
@@ -643,7 +643,7 @@ public final class MasterDataService implements IMasterDataService {
 		final IPOService poService = Services.get(IPOService.class);
 		
 		final int clientId = (Integer) poService.getValue(bPartner, "AD_Client_ID");
-		final int orgId = (Integer) poService.getValue(bPartner, "AD_Org_ID");
+		//final int orgId = (Integer) poService.getValue(bPartner, "AD_Org_ID");
 
 		try {
 			int indx = 0;

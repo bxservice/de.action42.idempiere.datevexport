@@ -65,7 +65,7 @@ public class CSV_Bewegungsdaten_Buchungssatz extends CSV_Buchungssatz {
 
 	// @MatchPattern(pattern = "e[0-9]{1,5}")
 	// @NotNull
-	private String konto;
+	//private String konto;
 
 	private String kontoNr;
 

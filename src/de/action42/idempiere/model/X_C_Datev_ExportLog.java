@@ -82,7 +82,7 @@ public class X_C_Datev_ExportLog extends PO implements I_C_Datev_ExportLog, I_Pe
         try	{
 	        Constructor<?> constructor = null;
 	    	constructor = clazz.getDeclaredConstructor(new Class[]{Properties.class, int.class, String.class});
-    	    result = (I_C_BPartner)constructor.newInstance(new Object[] {getCtx(), new Integer(getC_BPartner_ID()), get_TrxName()});
+    	    result = (I_C_BPartner)constructor.newInstance(new Object[] {getCtx(), Integer.valueOf(getC_BPartner_ID()), get_TrxName()});
         } catch (Exception e) {
 	        log.log(Level.SEVERE, "(id) - Table=" + Table_Name + ",Class=" + clazz, e);
 	        log.saveError("Error", "Table=" + Table_Name + ",Class=" + clazz);

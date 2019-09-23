@@ -11,5 +11,4 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="6.2.0",
  org.adempiere.base;bundle-version="6.2.0",
  de.action42.alfredKochen
 Service-Component: OSGI-INF/*.xml
-Bundle-Activator: org.adempiere.plugin.utils.AdempiereActivator
 Bundle-ActivationPolicy: lazy

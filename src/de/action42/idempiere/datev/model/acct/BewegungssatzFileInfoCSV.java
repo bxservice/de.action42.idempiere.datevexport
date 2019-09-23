@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import de.action42.idempiere.datev.DatevException;
 import de.action42.idempiere.datev.io.CSV_Bewegungssatzdatei;
 import de.action42.idempiere.datev.io.CSV_Datensatzdatei;
 import de.action42.idempiere.datev.model.DatensatzFileInfoCSV;

@@ -2,7 +2,6 @@ package de.action42.idempiere.datev.io;
 
 import java.io.File;
 import java.sql.Timestamp;
-import java.text.DecimalFormat;
 
 import de.action42.idempiere.datev.DatevException;
 import de.action42.idempiere.datev.model.CSV_Buchungssatz;
@@ -20,7 +19,7 @@ import de.action42.idempiere.datev.model.acct.CSV_Bewegungsdaten_Vollvorlauf;
  */
 public class CSV_Bewegungssatzdatei extends CSV_Datensatzdatei {
 
-	private double sumUmsatz = 0;
+	//private double sumUmsatz = 0;
 
 	/**
 	 * doesn't actually create the file. The file is created in
@@ -86,7 +85,7 @@ public class CSV_Bewegungssatzdatei extends CSV_Datensatzdatei {
 
 		addStringBuffer(sb);
 
-		sumUmsatz += bewegungsSatz.getUmsatz();
+		//sumUmsatz += bewegungsSatz.getUmsatz();
 	}
 
 	/**

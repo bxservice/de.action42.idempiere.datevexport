@@ -57,7 +57,7 @@ public class MyProcessFactory implements IProcessFactory {
 			//Get Process
 			try
 			{
-				process = (ProcessCall)processClass.newInstance();
+				process = (ProcessCall)processClass.getConstructor().newInstance();
 			}
 			catch (Exception ex)
 			{

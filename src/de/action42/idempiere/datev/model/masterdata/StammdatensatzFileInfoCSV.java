@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import de.action42.idempiere.datev.DatevException;
 import de.action42.idempiere.datev.io.CSV_Stammdatensatzdatei;
 import de.action42.idempiere.datev.model.DatensatzFileInfoCSV;
 

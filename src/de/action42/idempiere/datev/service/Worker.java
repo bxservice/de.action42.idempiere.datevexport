@@ -3,7 +3,6 @@ package de.action42.idempiere.datev.service;
 import static de.action42.idempiere.util.DatevCustomColNames.C_BPartner_CREDITORID;
 import static de.action42.idempiere.util.DatevCustomColNames.C_BPartner_DEBITORID;
 
-import de.action42.ak.model.X_XX_CostCenter;
 import java.io.File;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -24,11 +23,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import de.metas.adempiere.bpartner.service.IBPartnerPA;
-import de.metas.adempiere.invoice.service.IInvoicePA;
-import de.metas.adempiere.misc.service.IPOService;
-import de.metas.adempiere.util.Services;
-import de.metas.adempiere.util.time.SystemTime;
 import org.compiere.model.I_C_BPartner;
 import org.compiere.model.I_C_ElementValue;
 import org.compiere.model.I_C_Invoice;
@@ -40,6 +34,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
+import de.action42.ak.model.X_XX_CostCenter;
 import de.action42.idempiere.datev.DatevException;
 import de.action42.idempiere.datev.IDatevSettings;
 import de.action42.idempiere.datev.io.CSV_Verwaltungsdatei;
@@ -54,8 +49,6 @@ import de.action42.idempiere.datev.model.acct.BewegungssatzFileInfo;
 import de.action42.idempiere.datev.model.acct.BewegungssatzFileInfoCSV;
 import de.action42.idempiere.datev.model.acct.CSV_Bewegungsdaten_Buchungssatz;
 import de.action42.idempiere.datev.model.acct.CSV_Bewegungsdaten_Vollvorlauf;
-import de.action42.idempiere.datev.model.acct.CSV_Datentraegerkennsatz;
-import de.action42.idempiere.datev.model.acct.CSV_Verwaltungssatz;
 import de.action42.idempiere.datev.model.acct.OBE_Bewegungsdaten_Buchungssatz;
 import de.action42.idempiere.datev.model.acct.OBE_Bewegungsdaten_Vollvorlauf;
 import de.action42.idempiere.datev.model.acct.OBE_Datentraegerkennsatz;
@@ -63,9 +56,13 @@ import de.action42.idempiere.datev.model.acct.OBE_Verwaltungssatz;
 import de.action42.idempiere.datev.model.masterdata.CSV_Stammdaten_Buchungssatz;
 import de.action42.idempiere.datev.model.masterdata.OBE_Stammdaten_Buchungssatz;
 import de.action42.idempiere.datev.model.masterdata.StammdatensatzFileInfo;
-import de.action42.idempiere.datev.model.masterdata.StammdatensatzFileInfoCSV;
 import de.action42.idempiere.datev.util.FactAcctTool;
 import de.action42.idempiere.model.I_C_Datev_ExportLog;
+import de.metas.adempiere.bpartner.service.IBPartnerPA;
+import de.metas.adempiere.invoice.service.IInvoicePA;
+import de.metas.adempiere.misc.service.IPOService;
+import de.metas.adempiere.util.Services;
+import de.metas.adempiere.util.time.SystemTime;
 
 public final class Worker {
 
@@ -1110,7 +1107,7 @@ public final class Worker {
 		// Part3: iterate through the data and write it to the data
 		// file(s)
 		//
-		short currentFileNumber = 1;
+		//short currentFileNumber = 1;
 		exportedRecords = 0;
 
 		Collection<DatensatzFileInfoCSV> allFileInfos = new ArrayList<DatensatzFileInfoCSV>(

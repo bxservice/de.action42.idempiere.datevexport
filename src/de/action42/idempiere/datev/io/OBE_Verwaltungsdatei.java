@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import de.action42.idempiere.datev.DatevException;
-import de.action42.idempiere.datev.model.acct.OBE_Bewegungsdaten_Buchungssatz;
 import de.action42.idempiere.datev.model.acct.OBE_Datentraegerkennsatz;
 import de.action42.idempiere.datev.model.acct.OBE_Verwaltungssatz;
 import de.action42.idempiere.datev.util.StringUtil;
