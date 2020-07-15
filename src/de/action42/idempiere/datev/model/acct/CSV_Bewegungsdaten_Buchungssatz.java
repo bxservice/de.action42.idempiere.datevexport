@@ -123,7 +123,7 @@ public class CSV_Bewegungsdaten_Buchungssatz extends CSV_Buchungssatz {
 	/**
 	 * can be 0 - no / 1 - yes / empty - yes
 	 */
-	private char festschreibung;
+	private int festschreibung;
 	
 	public static final int KEINE_FESTSCHREIBUNG = 0;
 	// end
@@ -298,12 +298,12 @@ public class CSV_Bewegungsdaten_Buchungssatz extends CSV_Buchungssatz {
 	}
 
 	// XXX a42 / AK #206
-	public final char getFestschreibung() {
+	public final int getFestschreibung() {
 		return festschreibung;
 	}
 
 	public void setFestschreibung(final int newFestschreibung) {
-		this.festschreibung = (char) newFestschreibung;
+		this.festschreibung = newFestschreibung;
 	}
 	// end
 
