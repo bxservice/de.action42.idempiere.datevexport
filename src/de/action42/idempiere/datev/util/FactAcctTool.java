@@ -233,7 +233,7 @@ public final class FactAcctTool {
 			newRecord.setKost2(currentRecord.getKost2());
 			newRecord.setSkonto(currentRecord.getSkonto());
 			// XXX a42 / AK #206
-			newRecord.setFestschreibung(0);
+			newRecord.setFestschreibung(CSV_Bewegungsdaten_Buchungssatz.KEINE_FESTSCHREIBUNG);
 			// end a42
 			
 
