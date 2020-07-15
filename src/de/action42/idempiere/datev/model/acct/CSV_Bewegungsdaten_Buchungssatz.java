@@ -119,6 +119,11 @@ public class CSV_Bewegungsdaten_Buchungssatz extends CSV_Buchungssatz {
 	// @NotNull
 	private String euSteuersatz = "";
 
+	/**
+	 * can be 0 - no / 1 - yes / empty - yes
+	 */
+	private char festschreibung;
+
 	// @MatchPattern(pattern = "o[0-9]{1,2}")
 	// @NotNull
 	public static final String WAEHRUNGSKENNUNG = "o1";
@@ -288,6 +293,15 @@ public class CSV_Bewegungsdaten_Buchungssatz extends CSV_Buchungssatz {
 		euSteuersatz = 'j' + euSteuersatzFormat.format(newEuSteuersatz);
 	}
 
+
+	public final char getFestschreibung() {
+		return festschreibung;
+	}
+
+	public void setFestschreibung(final int newFestschreibung) {
+		this.festschreibung = (char) newFestschreibung;
+	}
+
 	public final String getBelegfeld1() {
 		return belegfeld1;
 	}
@@ -414,6 +428,8 @@ public class CSV_Bewegungsdaten_Buchungssatz extends CSV_Buchungssatz {
 		sb.append(getEuId());
 		sb.append(";EuSteuersatz=");
 		sb.append(getEuSteuersatz());
+		sb.append(";Festschreibung=");
+		sb.append(getFestschreibung());
 		sb.append("]");
 
 		return sb.toString();

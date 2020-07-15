@@ -232,6 +232,10 @@ public final class FactAcctTool {
 			newRecord.setKost1(currentRecord.getKost1());
 			newRecord.setKost2(currentRecord.getKost2());
 			newRecord.setSkonto(currentRecord.getSkonto());
+			// XXX a42 / AK #206
+			newRecord.setFestschreibung(0);
+			// end a42
+			
 
 			CSV_Verwaltungsdatei.validate(newRecord);
 
