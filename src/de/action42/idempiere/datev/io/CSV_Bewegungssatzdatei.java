@@ -82,7 +82,7 @@ public class CSV_Bewegungssatzdatei extends CSV_Datensatzdatei {
 		sb.append("\"" + bewegungsSatz.getKost1() + "\";"); // 13 - Kost 1
 		sb.append("\"" + bewegungsSatz.getEuId() + "\";"); // 14 - UStID
 		// XXX a42 / AK #206 
-		sb.append("\"" + bewegungsSatz.getFestschreibung() + "\";"); // 15 - Festschreibung
+		sb.append(bewegungsSatz.getFestschreibung() + ";"); // 15 - Festschreibung
 		// end
 		sb.append(CSV_Bewegungsdaten_Buchungssatz.SATZENDE);
 
