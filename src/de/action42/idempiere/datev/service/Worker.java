@@ -906,7 +906,7 @@ public final class Worker {
 		}
 		exportStartTime = SystemTime.asTimestamp();
 
-		// a42 / AK - #120 trxName zu kurz
+		// a42 / AK - #120 trxName too short
 		final String trxName = "dateExport_" + Long.toString(exportStartTime.getTime()) + "_" + UUID.randomUUID().toString();
 
 		// Part2: Get the data, and insert them into our datev api's objects
