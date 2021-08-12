@@ -2,13 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DatevExport
 Bundle-SymbolicName: de.action42.idempiere.datevExport;singleton:=true
-Bundle-Version: 6.2.0.qualifier
+Bundle-Version: 8.2.0.qualifier
 Automatic-Module-Name: de.action42.idempiere.datevExport
 Comment: Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=1.11))"
 Bundle-ClassPath: .
-Require-Bundle: org.adempiere.plugin.utils;bundle-version="6.2.0",
- org.adempiere.base;bundle-version="6.2.0",
- de.action42.alfredKochen
+Require-Bundle: org.adempiere.plugin.utils;bundle-version="8.2.0",
+ org.adempiere.base;bundle-version="8.2.0"
 Service-Component: OSGI-INF/*.xml
 Bundle-ActivationPolicy: lazy

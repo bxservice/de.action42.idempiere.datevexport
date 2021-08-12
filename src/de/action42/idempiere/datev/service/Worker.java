@@ -28,13 +28,11 @@ import org.compiere.model.I_C_ElementValue;
 import org.compiere.model.I_C_Invoice;
 import org.compiere.model.I_Fact_Acct;
 import org.compiere.model.MInvoice;
-import org.compiere.model.MInvoiceLine;
 import org.compiere.model.X_C_ElementValue;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
-import de.action42.ak.model.X_XX_CostCenter;
 import de.action42.idempiere.datev.DatevException;
 import de.action42.idempiere.datev.IDatevSettings;
 import de.action42.idempiere.datev.io.CSV_Verwaltungsdatei;
@@ -487,16 +485,6 @@ public final class Worker {
 					final int docNo1 = FactAcctTool.getDocNoInt(invoice
 							.getDocumentNo());
 					dataRecord.setBelegfeld1(docNo1);
-					// XXX a42 - AK set Kost1 
-					int[] lines = MInvoiceLine.getAllIDs("C_InvoiceLine", "C_Invoice_ID="+invoice.getC_Invoice_ID(), trxName);
-					// FIXME we assume same cost center in all invoice lines - might be wrong!
-					MInvoiceLine line = new MInvoiceLine(Env.getCtx(),lines[0],trxName);
-					int costcenterID = line.getUser1_ID();
-					if (costcenterID > 0) {
-						X_XX_CostCenter costcenter = new X_XX_CostCenter(Env.getCtx(), costcenterID, trxName);
-						dataRecord.setKost1(costcenter.getValue());
-					}
-					// End a42 - AK
 			}
 				dataRecord.setBuchungstext(debitor.getName());
 
