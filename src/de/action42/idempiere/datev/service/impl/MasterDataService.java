@@ -1,5 +1,8 @@
 package de.action42.idempiere.datev.service.impl;
 
+import static de.action42.idempiere.util.DatevCustomColNames.C_BPartner_CREDITORID;
+import static de.action42.idempiere.util.DatevCustomColNames.C_BPartner_DEBITORID;
+
 import java.io.File;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -326,10 +329,10 @@ public final class MasterDataService implements IMasterDataService {
 		MBPartner bp = new MBPartner(Env.getCtx(), bPartnerId, trxName); 
 		String personenkonto = "";
 		if (isSOTrx) {
-			personenkonto = bp.get_ValueAsString("DebtorID");
+			personenkonto = bp.get_ValueAsString(C_BPartner_DEBITORID);
 		}
 		else {
-			personenkonto = bp.get_ValueAsString("CreditorID");
+			personenkonto = bp.get_ValueAsString(C_BPartner_CREDITORID);
 		}
 		
 		addDataRecordCSV("\"" + personenkonto + "\""); // 1 Konto

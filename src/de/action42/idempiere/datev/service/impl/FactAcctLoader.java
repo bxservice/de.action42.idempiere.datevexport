@@ -162,6 +162,7 @@ public class FactAcctLoader implements IFactAcctLoader {
 				.append(" AND 'Y'='").append(exportAP ? "Y" : "N").append("' "); 
 		String factAcctSql = sql.toString();
 		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try {
 			pstmt = DB.prepareStatement(factAcctSql, trxName);
 			pstmt.setTimestamp(1, dateFrom);
@@ -169,7 +170,7 @@ public class FactAcctLoader implements IFactAcctLoader {
 			pstmt.setTimestamp(3, dateFrom);
 			pstmt.setTimestamp(4, dateTo);
 
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 
 			while (rs.next()) {
 				final MFactAcct factAcct = new MFactAcct(Env.getCtx(), rs,
@@ -214,25 +215,26 @@ public class FactAcctLoader implements IFactAcctLoader {
 					int validCombinationID = 0;
 
 					PreparedStatement pstmt1 = null;
+					ResultSet rs1 = null;
 					try {
 						pstmt1 = DB.prepareStatement(taxAcct_sql, trxName);
 						pstmt1.setLong(1, factAcct.getC_Tax_ID());
 						pstmt1.setLong(2, clientId);
 
-						ResultSet rs1 = pstmt1.executeQuery();
+						rs1 = pstmt1.executeQuery();
 
 						while (rs1.next()) {
 							validCombinationID = rs1.getInt(1);
 
 						}
-						rs1.close();
-						pstmt1.close();
-						pstmt1 = null;
 					} catch (Exception e) {
 						LOG.log(Level.SEVERE, "Retrieval of booking data failed. SQL: "
 								+ taxAcct_sql, e);
 						throw new DatevException(
 						"Retrieval of booking data failed. See issue log for details.");
+					} finally {
+						DB.close(rs1, pstmt1);
+						rs1 = null; pstmt1 = null;
 					}
 
 					final X_C_ValidCombination validCombination = new X_C_ValidCombination(Env.getCtx(), validCombinationID, trxName);
@@ -256,14 +258,14 @@ public class FactAcctLoader implements IFactAcctLoader {
 				}
 				factAccts.add(factAcct);
 			}
-			rs.close();
-			pstmt.close();
-			pstmt = null;
 		} catch (Exception e) {
 			LOG.log(Level.SEVERE, "Retrieval of booking data failed. SQL: "
 					+ factAcctSql, e);
 			throw new DatevException(
 					"Retrieval of booking data failed. See issue log for details.");
+		} finally {
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
 		}
 	}
 
