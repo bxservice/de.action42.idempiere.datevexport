@@ -4,7 +4,7 @@
 	<groupId>org.idempiere</groupId>
 	<artifactId>org.idempiere.parent</artifactId>
 	<version>8.2.0-SNAPSHOT</version>
-	<relativePath>../../../idempiere8.2/ws/idempiere/org.idempiere.parent/pom.xml</relativePath>
+	<relativePath>../iDempiere8.2/org.idempiere.parent/pom.xml</relativePath>
   </parent>
   <artifactId>de.action42.idempiere.datevExport</artifactId>
   <packaging>eclipse-plugin</packaging>
